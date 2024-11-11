@@ -1,0 +1,11 @@
+figure();
+plot(tvec, x(1,:));
+hold on;
+plot(tvec, x(2,:));
+plot(tvec, x(3,:));
+plot(tvec, x(4,:));
+plot(tvec, x(5,:));
+yyaxis right;
+plot(tvec, x(6,:));
+yyaxis left;
+grid on;

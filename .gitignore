@@ -1,0 +1,56 @@
+# ################  Ignore extension files: ############
+
+*.pdf
+*.eps
+*.log
+*.png
+*.fig
+*.mat
+
+# ######### SPECIFIC FILES ##########33
+temp.py
+test.zip
+test01.py
+test02.py
+test*.py
+
+
+DetectVelocityPeaks_func (copy).m.BAK
+Filter_yData_transient*
+NO_gvcenvelope.m 
+NO_onsetdetect.m 
+tmp.m 
+hola.m
+A44_pitchG_20240301_190919_NoGroove.mat.NoGroove
+
+
+# ################# Auto things and OS ###########
+
+.DS_Store
+Thumbs.db
+__pycache__/
+
+
+# MeasureInletOutlet/Photos/: Ignores all files and subdirectories in the MeasureInletOutlet/Photos/ directory
+
+# ################ FOLDERS ##################
+
+BackupData/
+Delete/
+Dismiss_LowRJV/
+SpecialCases/
+test/
+
+processed/BENOIT*
+processed/Corr*
+processed/NO_Analysis_Plotter* 
+processed/*.fig 
+processed/temp.m
+processed/BackupDataProcessed/
+processed/Delete/
+processed/Dismiss/
+processed/Figures/
+
+
+
+
