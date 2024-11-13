@@ -16,7 +16,8 @@ test01.py
 test02.py
 test*.py
 temp.m 
-
+NO* 
+*.NO 
 
 DetectVelocityPeaks_func (copy).m.BAK
 Filter_yData_transient*
