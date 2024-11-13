@@ -1,11 +1,14 @@
 clc; clear; 
 fs = 51.2e3;
 dt = 1/fs;
+videoObj = VideoWriter('output_video.avi'); 
+videoObj.FrameRate = 12; 
+open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 5 : length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 2 : length(files)  % ==== MAIN LOOP ====
 
-clc; clearvars -except BIGIDX files
+clc; clearvars -except BIGIDX files videoObj
 % close all;
 tinit = tic();
 fs    = 51.2e3;
@@ -222,9 +225,43 @@ for idx = 1 : length(lk_foot)
         A2max_over_A1simult(idx) = envel_second(a2max_idx)/envel_first(a2max_idx);
         A2max_over_A1target(idx) = a2max_val/mean(envel_first(end-fix(fs*0.500):end),'omitnan');
 
-        if 0 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
+
+        % ALIGN AND GROUP-PLOT  ===========================
+PRECUT = fix(0.020*fs); % (Def. 0.015 s) Shift Data away from time zero
+fprintf("Starting beta nu fits...");
+Ptar = Pfoot_targ(idx);
+ft = fittype( 'Ptar./(1+d*exp(-b*(x-c))).^(1/d)', 'independent', 'x', 'dependent', 'y' );
+opts = fitoptions( 'Method', 'NonlinearLeastSquares' , 'TolFun', 1e-12);
+opts.Display = 'Off';
+%                  (b)   (c)    (d)
+%                  beta  t_o    nu
+opts.Lower      = [Ptar 300   1e-3   1e-4 ];
+opts.Upper      = [Ptar 10e3  2      10    ]; 
+opts.StartPoint = [Ptar 300   0.01   0.01];
+opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
+shiftonset       = find(foot_trans{idx}/Pfoot_targ(idx)>0.1,1,'first') ;
+footdatavec{idx} = circshift(foot_trans{idx} , -shiftonset + PRECUT ); 
+timevec{idx}     = ([0:length(footdatavec{idx})-1] - PRECUT)*dt  ;           
+TRstartidx = 1;
+TRendidx   = length(footdatavec{idx})-shiftonset+PRECUT;
+xData = timevec{idx}(1:TRendidx)';
+yData = footdatavec{idx}(1:TRendidx);
+[FitRes{idx}, gof{idx}] = fit( xData, yData', ft, opts );
+
+
+
+
+
+
+
+
+
+
+        if 1 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
+
+            TLIMS = [0 0.500];
             figure(23); clf;
-            subplot(2,2,1);
+            subplot(2,3,1);
             plot(time,pipecurr(1:hL) );
             hold on;
             plot(time, enveltot, 'r'); ylabel('Pressure MouthRad total');
@@ -234,20 +271,42 @@ for idx = 1 : length(lk_foot)
             plot([0,time(end)],0.2*Ppipe_targ(idx)*[1,1],'--k');
             plot([1,1]*time(t20idxp),[0,1.1*max(pipecurr) ],'--k');
             plot([1,1]*time(t80idxp),[0,1.1*max(pipecurr) ],'--k');
-            xlim([0 0.500]);
-            ylim([0 1.1*max(pipecurr)]);
+            xlim(TLIMS);
+            rawLim = 1.1*max(pipecurr);
+            ylim([-5 rawLim]);
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none');        
             
-            subplot(2,2,2);
-            plot(time, COMP(1,1:hL)); hold on; plot(time, envel_first, 'r');ylabel('Fundam');
+            subplot(2,3,2);
+            plot(time, COMP(1,1:hL)); hold on; plot(time, envel_first, 'r');ylabel('Fundam'); ylim([-5,rawLim]);xlim([0 0.500]);            
             
-            subplot(2,2,3);
-            plot(time,COMP(2,1:hL));hold on; plot(time, envel_second, 'r');ylabel('2nd Harmonic');xlabel('Time [s]');
+            subplot(2,3,4);
+            plot(time,COMP(2,1:hL));hold on; plot(time, envel_second, 'r');ylabel('2nd Harmonic');xlabel('Time [s]');ylim([-5,rawLim]);xlim([0 0.500]);
         
-            subplot(2,2,4);
+            subplot(2,3,5);
             plot(time, COMP(3,1:hL));
-            hold on; plot(time, envel_third, 'r');ylabel('3rd Harmonic');
+            hold on; plot(time, envel_third, 'r');ylabel('3rd Harmonic');ylim([-5,rawLim]);xlim([0 0.500]);
+            yyaxis right;
+            plot(time,comp0(1:hL) );ylabel('Zeroth mode Fourier');
+            
+
+            subplot(2,3,[3,6]);
+            h = plot( FitRes{idx}, xData, yData );
+            legend( h, 'Pressure vs. Time', 'Fitted model', 'Location', 'NorthEast', 'Interpreter', 'none' );
+            xlabel( 'Time [s]', 'Interpreter', 'none' );
+            ylabel( 'Foot pressure [Pa]', 'Interpreter', 'none' );
+            grid on;
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none');        
+            xlim([-0.005, 0.020]);
+            % ylim([-50 700]);
             drawnow;
-            pause(2);
+            frame = getframe(gcf);
+            writeVideo(videoObj, frame);
+
+
+
+
+
+
         end
 
                 
@@ -255,146 +314,10 @@ end % Close loop over all transients of current file
 
 % Period (found by yin sometimes):
 T1 = 1./f1;
+   
 
 
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  FOOT PRESSURE beta and nu fit
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% PREPARE FIT OPTIONS ===========================
-
-ft = fittype( 'a./(1+d*exp(-b*(x-c))).^(1/d)', 'independent', 'x', 'dependent', 'y' );
-                        
-opts = fitoptions( 'Method', 'NonlinearLeastSquares' , 'TolFun', 1e-12);
-opts.Display = 'Off';
-
-%                   (a)             (b)   (c)    (d)
-%                  Ptarg            beta  t_o    nu
-opts.Lower      = [200              300   1e-3   1e-4 ];
-opts.Upper      = [600              10e3  2      10    ]; 
-opts.StartPoint = [mean(Pfoot_targ) 300   0.01   0.01];
-opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
-
-% /////////////////////////////////////////////////////////
-
-
-% ALIGN AND GROUP-PLOT  ===========================
-PRECUT = fix(0.020*fs); % (Def. 0.015 s) Shift Data away from time zero
-fprintf("Starting beta nu fits...");
-for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
-
-    Ptar = Pfoot_targ(jdx);
-    
-    ft = fittype( 'Ptar./(1+d*exp(-b*(x-c))).^(1/d)', 'independent', 'x', 'dependent', 'y' );
-    opts = fitoptions( 'Method', 'NonlinearLeastSquares' , 'TolFun', 1e-12);
-    opts.Display = 'Off';
-    %                  (b)   (c)    (d)
-    %                  beta  t_o    nu
-    opts.Lower      = [Ptar 300   1e-3   1e-4 ];
-    opts.Upper      = [Ptar 10e3  2      10    ]; 
-    opts.StartPoint = [Ptar 300   0.01   0.01];
-    opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
-
-
-
-    
-    shiftonset       = find(foot_trans{jdx}/Pfoot_targ(jdx)>0.1,1,'first') ;
-
-    footdatavec{jdx} = circshift(foot_trans{jdx} , -shiftonset + PRECUT ); 
-    timevec{jdx}     = ([0:length(footdatavec{jdx})-1] - PRECUT)*dt  ;           
-
-    TRstartidx = 1;
-    TRendidx   = length(footdatavec{jdx})-shiftonset+PRECUT;
-
-    % Fit model to data.
-    % try
-        xData = timevec{jdx}(1:TRendidx)';
-        yData = footdatavec{jdx}(1:TRendidx);
-        [FitRes{jdx}, gof{jdx}] = fit( xData, yData', ft, opts );
-    % end
-
-    % Plot fit with data.
-    if 1 
-        figure(20);clf; 
-        h = plot( FitRes{jdx}, xData, yData );
-        legend( h, 'Pressure vs. Time', 'Fitted model', 'Location', 'NorthEast', 'Interpreter', 'none' );
-        % Label axes
-        xlabel( 'Time [s]', 'Interpreter', 'none' );
-        ylabel( 'Foot pressure [Pa]', 'Interpreter', 'none' );
-        grid on;
-        xlim([-0.010, 0.020]);
-        title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(jdx)]));        
-        % ws = round(fs/30)+1;% po = 21;% try%     yfil = sgolayfilt(yData, po, ws);% catch%     yfil = sgolayfilt(yData, po, ws+1); end hold on;plot( xData, yfil, '--g');hold off;
-
-        drawnow;
-        pause(0.5);
-    end
-    
-    if 0
-        figure(20);clf; 
-        h = plot( xData-xData(1), yData );
-        hold on;
-        obj = feval(FitRes{1}, (xData));
-        plot( xData-xData(1), obj, 'r');
-        legend( h, 'Pressure vs. Time', 'Fitted model', 'Location', 'NorthEast', 'Interpreter', 'none' );
-        xlabel( 'Time [s]', 'Interpreter', 'none' );
-        ylabel( 'Foot pressure [Pa]', 'Interpreter', 'none' );
-        grid on;
-        
-        title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(jdx)]));
-        
-        ws = round(fs/30)+1;
-        po = 21;
-        try
-            yfil = sgolayfilt(yData, po, ws);
-        catch
-            yfil = sgolayfilt(yData, po, ws+1);
-        end
-        plot( xData-xData(1), yfil, '--g');
-
-        hold off;
-        xlim([0.000, 0.250]);
-
-        drawnow;
-        pause(); 
-    end
-    
-    if 0 
-    fprintf('Pfoot_targ %1.1f, Beta %1.1f, Nu %1.5f\n',FitRes{jdx}.a,FitRes{jdx}.b,FitRes{jdx}.d);
-    end
-
-    % Store fit data
-    % % % % % % % % % % % % % % % % % % % % % % % % % % afit(jdx)  = FitRes{jdx}.a; % Ptarg
-    bfit(jdx)  = FitRes{jdx}.b; % beta
-    dfit(jdx)  = FitRes{jdx}.d; % nu
-    gofr2(jdx) = gof{jdx}.rsquare;
-
-    
-end % CLOSE LOOP over all transients of current file
-fprintf(" (Done)\n");
-
-Ptargfit = afit;
-betafit  = bfit;
-nufit    = dfit;
-
-% Reduced Jet Velocity in S-S if Wm is known ==========================
-
-RJV = sqrt(2*Pfoot_targ(:)/1.2)./(thedata.PR_params.Wm*f1(:));
-Wm  = thedata.PR_params.Wm;
-
-% %%%%%% SAVE processed data and results %%%%%%%%%%
-
-datafilename = filename(1:end-4);
-if 0
-    save(['./processed/New_' datafilename '_PROCESSED.mat'],'f1','betafit','nufit',...
-        'Area1','Area2','RJV','Wm','fs','PpalletB_targ','Pgroove_targ','t20groove',...
-        'PRTgroove','Pfoot_targ','t20foot','PRTfoot','Ppipe_targ','t20mouth','PRTpipe',...
-        'KeyMovingTime','gofr2','A2max_over_A1simult','A2max_over_A1target');
-    
-    fprintf('Ellapsed time with this file: %1.2f \n', toc(tinit));
-end
 
 
 end % BIGIDX of all files opened
+close(videoObj);

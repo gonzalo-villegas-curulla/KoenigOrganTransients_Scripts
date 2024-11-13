@@ -1,11 +1,14 @@
 clc; clear; 
 fs = 51.2e3;
 dt = 1/fs;
+    videoObj = VideoWriter('output_video.avi'); 
+    videoObj.FrameRate = 12; 
+    open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 5 : length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 3 : 3%length(files)  % ==== MAIN LOOP ====
 
-clc; clearvars -except BIGIDX files
+clc; clearvars -except BIGIDX files videoObj
 % close all;
 tinit = tic();
 fs    = 51.2e3;
@@ -165,15 +168,15 @@ for idx = 1 : length(lk_foot)
         ll     = fix(length(SSmask)*0.5): fix(length(SSmask)*0.75);
         SSmask = SSmask( ll );
         midpipedata = x(5, SSmask )'; midpipedata = midpipedata(:);
-        try  % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        if 01 % <<<<<< % A04 (sample2) & A05 (samp.3) fail: they should be 155.56Hz and 164.81
             [RR,lags] = xcorr(midpipedata);
             [~,locs]  = findpeaks(RR, 'MinPeakProminence',(max(RR)-std(RR)));
             T1estim   = mean(diff(locs))*dt;
             f1estim   = 1/T1estim;
-        catch
+        else
             fprintf("Xcorr failed for f1estimation, trying with YIN...\n")
-            KnownFreq = 155; % 155Hz=D# 1octave and a half below A440
-            P.sr = fs;
+            KnownFreq = 164.81; % A04 (sample2) & A05 (samp.3) fail: they should be 155.56Hz and 164.81
+            P.sr      = fs;
             P.minf0 = 0.9*KnownFreq;
             P.maxf0 = 1.1*KnownFreq;
             Ryin    = yin( midpipedata  ,P);
@@ -222,7 +225,7 @@ for idx = 1 : length(lk_foot)
         A2max_over_A1simult(idx) = envel_second(a2max_idx)/envel_first(a2max_idx);
         A2max_over_A1target(idx) = a2max_val/mean(envel_first(end-fix(fs*0.500):end),'omitnan');
 
-        if 1 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
+        if 0 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
 
             TLIMS = [0 0.500];
             figure(23); clf;
@@ -238,19 +241,20 @@ for idx = 1 : length(lk_foot)
             plot([1,1]*time(t80idxp),[0,1.1*max(pipecurr) ],'--k');
             xlim(TLIMS);
             rawLim = 1.1*max(pipecurr);
-            ylim([0 rawLim]);
+            ylim([-5 rawLim]);
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none');        
             
             subplot(2,2,2);
-            plot(time, COMP(1,1:hL)); hold on; plot(time, envel_first, 'r');ylabel('Fundam'); ylim(rawLim*[0,1]);xlim([0 0.500]);
+            plot(time, COMP(1,1:hL)); hold on; plot(time, envel_first, 'r');ylabel('Fundam'); ylim([-5,rawLim]);xlim([0 0.500]);
             
             subplot(2,2,3);
-            plot(time,COMP(2,1:hL));hold on; plot(time, envel_second, 'r');ylabel('2nd Harmonic');xlabel('Time [s]');ylim(rawLim*[0,1]);xlim([0 0.500]);
+            plot(time,COMP(2,1:hL));hold on; plot(time, envel_second, 'r');ylabel('2nd Harmonic');xlabel('Time [s]');ylim([-5,rawLim]);xlim([0 0.500]);
         
             subplot(2,2,4);
             plot(time, COMP(3,1:hL));
-            hold on; plot(time, envel_third, 'r');ylabel('3rd Harmonic');ylim(rawLim*[0,1]);xlim([0 0.500]);
+            hold on; plot(time, envel_third, 'r');ylabel('3rd Harmonic');ylim([-5,rawLim]);xlim([0 0.500]);
             drawnow;
-            pause(2);
+            % pause(2);            
         end
 
                 
@@ -286,6 +290,10 @@ opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
 % ALIGN AND GROUP-PLOT  ===========================
 PRECUT = fix(0.020*fs); % (Def. 0.015 s) Shift Data away from time zero
 fprintf("Starting beta nu fits...");
+
+ % lkjdfsgoiuhvtpo4q3qut34qiubytvel
+ % bternklrwlukvtewku348io34i7yn3qq5qbvihubtwitrw4ibltr4wtviw7478w45ibyw4a5liw45iw4854wy5i4wyi5w45hlibw4va5lnhw5wal8i5aw4v5
+
 for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
 
     Ptar = Pfoot_targ(jdx);
@@ -327,11 +335,15 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
         xlabel( 'Time [s]', 'Interpreter', 'none' );
         ylabel( 'Foot pressure [Pa]', 'Interpreter', 'none' );
         grid on;
-        xlim([-0.010, 0.020]);
-        title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(jdx)]));        
+        
+        title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(jdx)]), 'interpreter','none');        
         % ws = round(fs/30)+1;% po = 21;% try%     yfil = sgolayfilt(yData, po, ws);% catch%     yfil = sgolayfilt(yData, po, ws+1); end hold on;plot( xData, yfil, '--g');hold off;
+        xlim([-0.005, 0.020]);
+        ylim([-50 700]);
         drawnow;
-        pause(0.5);
+        frame = getframe(gcf);
+        writeVideo(videoObj, frame);
+        % pause(0.5);
     end
     
     if 0
@@ -389,8 +401,9 @@ Wm  = thedata.PR_params.Wm;
 % %%%%%% SAVE processed data and results %%%%%%%%%%
 
 datafilename = filename(1:end-4);
-if 0
-    save(['./processed/New_' datafilename '_PROCESSED.mat'],'f1','betafit','nufit',...
+
+if 1
+    save(['./processed/' datafilename '_PROCESSED.mat'],'f1','betafit','nufit',...
         'Area1','Area2','RJV','Wm','fs','PpalletB_targ','Pgroove_targ','t20groove',...
         'PRTgroove','Pfoot_targ','t20foot','PRTfoot','Ppipe_targ','t20mouth','PRTpipe',...
         'KeyMovingTime','gofr2','A2max_over_A1simult','A2max_over_A1target');
@@ -400,3 +413,4 @@ end
 
 
 end % BIGIDX of all files opened
+% close(videoObj);

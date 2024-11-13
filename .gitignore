@@ -6,6 +6,8 @@
 *.png
 *.fig
 *.mat
+*.asv
+*.avi
 
 # ######### SPECIFIC FILES ##########33
 temp.py
@@ -13,6 +15,7 @@ test.zip
 test01.py
 test02.py
 test*.py
+temp.m 
 
 
 DetectVelocityPeaks_func (copy).m.BAK
@@ -22,6 +25,8 @@ NO_onsetdetect.m
 tmp.m 
 hola.m
 A44_pitchG_20240301_190919_NoGroove.mat.NoGroove
+plot_getScatteredData.m
+Analysis_TransientBis.m
 
 
 # ################# Auto things and OS ###########
@@ -50,6 +55,9 @@ processed/BackupDataProcessed/
 processed/Delete/
 processed/Dismiss/
 processed/Figures/
+processed/Figures/Pngs/
+processed/Geometry/FindScatterLine_XData_Ydata.m
+
 
 
 
