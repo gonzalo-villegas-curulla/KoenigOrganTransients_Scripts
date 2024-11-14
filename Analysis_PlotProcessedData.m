@@ -260,8 +260,25 @@ end
 % [40]:Sin/Spall        [41]:Sjet/Sin       [42]: KeyVel
 % [43]:A2max_over_A1simult   [44]: A2max_over_A1target
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       ANALYSIS PLOTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% t20rad - t20 foot [ACOUSTIC DELAY]
+%% Pmouth as per massage to equations 9-10-11 and alpha_vc = 1;
+
+
+Pm =  MX(:,:,21) - (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,20) - MX(:,:,21));
+Pm =  MX(:,:,21) + (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,21) - MX(:,:,20));
+
+figure();
+
+scatter(  12*log2(MX(:,:,13)/440), log10(Pm) , 'filled'); box on; grid on;
+
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+ylabel('P_{m} [Pa]','interpreter','latex');
+
+
+%% t20rad - t20 foot [ACOUSTIC DELAY][OK]
 
 figure();
 scatter( 12*log2(MX(:,:,13)/440), 1e3*(MX(:,:,35)-MX(:,:,34) ), 'b', 'filled');
@@ -269,7 +286,7 @@ ylabel('$t^{20}_{rad}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
 xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 title('Acoustic delay','interpreter','latex');ylim([0 100])
 
-%% (t20rad-t20foot)/T1 [ACOUSTIC DELAY]
+%% (t20rad-t20foot)/T1 [ACOUSTIC DELAY][OK]
 
 figure();
 scatter( 12*log2(MX(:,:,13)/440), (MX(:,:,35)-MX(:,:,34) ).*MX(:,:,13), 'b', 'filled');
@@ -277,7 +294,7 @@ ylabel('$\frac{t^{20}_{rad} - t^{20}_{foot}}{T_1}$','interpreter','latex', 'Rota
 xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 title('Acoustic delay','interpreter','latex');%ylim([0 ])
 
-%% t20 foot [HYDRODYNAMIC DELAY]
+%% t20_foot [HYDRODYNAMIC DELAY][OK]
 
 figure();
 scatter( 12*log2(MX(:,:,13)/440),1e3*(MX(:,:,34) ), 'b', 'filled');
@@ -285,15 +302,25 @@ ylabel('t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
 xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 title('Hydrodynamic delay','interpreter','latex');ylim([0 10])
 
-%% Sj / Sin 
+%% t20_foot normalized by tau_f =  [HYDRODYNAMIC DELAY]
+
+figure();
+scattera( 12*log2(MX(:,:,13)/440),( c * MX(:,:,34).*MX(:,:,5)./MX(:,:,2) ), 'b', 'filled');
+ylabel('$ \frac{t^{20}_f}{\tau_f} = \frac{c_o \times t^{20}_{f} \mathcal{S}_{in}}{V_f}$','interpreter','latex','Rotation',0);
+xlabel('$12\times log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+title('Hydrodynamic delay','interpreter','latex');
+
+
+
+%% Sj / Sin [OK]
 
 figure();
 scatter( 12*log2(MX(:,:,13)/440), log10(MX(:,:,6)./MX(:,:,5) ), 'b', 'filled');
 ylabel('$\mathcal{S}_j / \mathcal{S}_{in}$ (log10)');
-xlabel('$12log_2(f_1/440)$');
+xlabel('$12log_2(f_1/440)$'); box on; grid on;
 
 
-%% a2max/a1(@a2max) (mouth rad) 
+%% a2max/a1(@a2max) (mouth rad) [OK]
 figure();
 scatter(12*log2(MX(:,:,13)/440), log10(MX(:,:,43)), 'b','filled' );
 xlabel({'Sample pipe xticks','12log2(f1/440) spacing'},'interpreter','latex');
@@ -309,7 +336,7 @@ ylabel('a2max/a1(@a2max) (log$_{10}$)','interpreter','latex');
 
 
 
-%% a2max/a1target (mouth rad) 
+%% a2max/a1target (mouth rad) [OK]
 
 figure();
 scatter(12*log2(MX(:,:,13)/440), (MX(:,:,44)), 'b','filled' );
@@ -335,41 +362,41 @@ xlabel('$12\times log_2(f_1/f_{ref})$','interpreter','latex');
 ylabel('$\frac{PRT_{foot}}{T_1}$ (log10)','interpreter','latex','Rotation',0);
 box on; grid on;
 
-%% PRTrad/T1 (w.r.t tessitura) [GOOD]
+%% PRTrad/T1 (w.r.t tessitura) [OK]
 figure();
 scatter(12*log2(MX(:,:,13)/440), MX(:,:,30).*MX(:,:,13), 'b','filled' ); 
 xlabel('$12 \times log_2(f_1/f_{ref})$','interpreter','latex');
 ylabel('$\frac{PRT_{rad}}{T_1}$','interpreter','latex','Rotation',0);
 box on; grid on;
 
-%% beta vs PRTfoot [GOOD, KEEP]
+%% beta vs PRTfoot [OK]
 figure();
 scatter( 1./MX(:,:,26), MX(:,:,29)  , 'b','filled');
 xlabel('$\beta^{-1}$', 'interpreter','latex');
 ylabel('PRT$_{foot}$ [s]', 'Interpreter','latex');
 box on; grid on;
 
-%% beta vs exp(nu)
+%% beta vs exp(nu) [NO]
 figure();
 mask = [1:10,13:22];
 mask = 1:22;
 % scatter( MX(:,mask,26), (MX(:,mask,27)), 'b', 'filled');
 % scatter( log10(MX(:,mask,26))/log10(20), log(MX(:,mask,27)), 'b', 'filled');
-scatter( (MX(:,mask,26)), (1.15).^(MX(:,mask,27)), 'b', 'filled');
+scatter( (MX(:,mask,26)), exp(MX(:,mask,27)), 'b', 'filled');
 xlabel('$\beta$', 'interpreter','latex');
 ylabel('$\nu$', 'Interpreter','latex');
 
-%% nu vs beta^(0.56)
+%% nu vs beta^(0.56) [OK]
 figure();
 mask = [1:10,13:22];
 mask = 1:22;
 % scatter( MX(:,mask,26), (MX(:,mask,27)), 'b', 'filled');
 % scatter( log10(MX(:,mask,26))/log10(20), log(MX(:,mask,27)), 'b', 'filled');
 scatter( MX(:,mask,27), MX(:,mask,26).^(0.56), 'b', 'filled');
-xlabel('$\beta$', 'interpreter','latex');
-ylabel('$\nu$', 'Interpreter','latex');
+ylabel('$\beta^{0.56}$', 'interpreter','latex');
+xlabel('$\nu$', 'Interpreter','latex'); grid on; box on;
 
-%% Ptarg differences
+%% Ptarg differences [OK]
 figure();
 
 scatter(12*log2(MX(:,:,13)/440), abs(MX(:,:,19)-MX(:,:,20)) ,'blue','filled');
@@ -384,7 +411,7 @@ ylabel('Target pressure differences','interpreter','latex');
 
 
 
-%%  Beta x T1 vs freq
+%%  Beta x T1 vs freq [OK]
 
 mask = [1:22]; % low: sample pipes 2 and 3; high, sample pipes 11 and 12
 
@@ -395,18 +422,18 @@ ylabel('$\beta \times  T_1$','interpreter','latex');
 xlabel('$12log_2(f_1/f_{ref})$','interpreter','latex'); 
 box on; grid on; 
 
-%% Beta x T1 vs freq BOX plot
+%% Beta x T1 vs freq BOX plot [OK]
 
 figure();
 boxplot(MX(:,:,26)./MX(:,:,13), 'Positions',12*log2(F1MEAN/440), 'Widths',1);
 xlabel({'Sample pipe xticks','12log_2() fspacing'},'interpreter','latex');
 ylabel('$\beta \times T_1$','interprete','latex');
 
-%% nu 
+%% nu [OK]
 figure();
-scatter( 12*log2(MX(:,:,13)/440) , log10(MX(:,:,27)) , 'b','filled');
+scatter( 12*log2(MX(:,:,13)/440) , log10(MX(:,:,27)) , 'b','filled'); ylabel('nu log10');
 
-figure(); boxplot([1:22], log10(MX(:,:,27)) );
+figure(); boxplot( log10(MX(:,:,27)) , 'Positions', 12*log2(F1MEAN/440), 'Widths', 1); ylabel('nu log10');
 
 %% BETA vs Anything
 namevarsall = {'Lp','Vf','PWdth','TNHD','INLET','SJET','h','H','Wm','Dp',...
@@ -419,87 +446,74 @@ namevarsall = {'Lp','Vf','PWdth','TNHD','INLET','SJET','h','H','Wm','Dp',...
     't{20}grv','t{20}foot','t{20}rad',...
     't20(foot-grv)','t20(rad-foot)',...
     'Area1','Area2','Sin/Spal','Sjet/Sin','MaxKeyVel','a2max/a1(@a2max)','a2max/a1target'};
-figure(24); clf;
-for idx = [1:25,27:42]
+figure();
+for idx = [1:44]
    scatter( log10(MX(:,:,26)), log10(MX(:,:,idx)) , 'b','filled');
    xlabel('beta (log10)'); ylabel([namevarsall{idx},' (log10)']);%ylabel(num2str(idx));
    box on; drawnow();
    pause();
 end
 
-%% BETA versus NU
+%% BETA*T1 versus NU [NO]
 figure();
-scatter( log(MX(:,:,26)), log(MX(:,:,27)), 'b','filled');
-xlabel('beta ln'); ylabel('nu ln');
-%% BETA*T1 versus NU
-figure();
-scatter(log(MX(:,:,26)./MX(:,:,13)), log(MX(:,:,27)), 'b','filled');
+scatter(log10(MX(:,:,26)./MX(:,:,13)), log10(MX(:,:,27)), 'b','filled');
 xlabel('beta*T1'); ylabel('nu');
-%% BETA versus Qj
+%% BETA versus Qj [OK]
 figure();
-scatter(log(MX(:,:,26)), log(MX(:,:,17)), 'b','filled');
-xlabel('beta'); ylabel('Qj');
-%% BETA*T1 versus Qj
-% figure();
-% scatter(log(MX(:,:,26)./MX(:,:,13)), log(MX(:,:,17)), 'b','filled');
-% xlabel('beta*T1'); ylabel('Qj');
+scatter( log10(MX(:,:,26)), log10(MX(:,:,17)), 'b','filled');
+xlabel('beta log10'); ylabel('Qj log10');
+%% BETA*T1 versus Qj [NO]
+figure();
+scatter( log10(MX(:,:,26)./MX(:,:,13)), log10(MX(:,:,17)), 'b','filled');
+xlabel('beta*T1'); ylabel('Qj');
 %% Beta*Vf,Qj
 figure();
-scatter( log( MX(:,:,26) ), log(MX(:,:,17)) ,'b','filled');
-%% NU vs Anything (pending to check)
-figure(24); clf;
-for idx = [1:25,27:42]
-   scatter( log(MX(:,:,idx)) ,log(MX(:,:,27)), 'b','filled');
-   ylabel('nu log'); xlabel([namevarsall{idx},' (ln)']);%ylabel(num2str(idx));
+scatter( log10( MX(:,:,26) ), log10(MX(:,:,17)) ,'b','filled');
+%% NU vs Anything (pending to check) [NO]
+figure();
+for idx = [43:44]
+   scatter( log10(MX(:,:,idx)) ,log10(MX(:,:,27)), 'b','filled');
+   try
+    ylabel('nu log'); xlabel([namevarsall{idx},' (ln)']);%ylabel(num2str(idx));
+   end
    box on; drawnow();
    pause();
 end
 
-%% PRTgrv * f1 vs NU
+%% PRTgrv * f1 vs NU [NO]
 figure();
 scatter( log(MX(:,:,30).*MX(:,:,13)), log(MX(:,:,27)), 'b', 'filled');
-%% XXX  vs NU
-figure();
-scatter( log( abs(MX(:,:,37)) ), log(MX(:,:,27)), 'b', 'filled');
-
 %% PRTgrv * f1 vs NU
 figure();
 scatter( log(MX(:,:,30).*MX(:,:,13)), log(MX(:,:,27)), 'b', 'filled');
 
 
 
-
-
-
-%% MaxKeyVelocity vs Anything
+%% MaxKeyVelocity vs Anything [NO]
 figure(24); clf;
 for idx = [1:44]
    scatter( log(MX(:,:,42)), log(abs(MX(:,:,idx))) , 'b','filled');
-   xlabel('VeloMaxAbs log'); ylabel([namevarsall{idx},' (ln)']);%ylabel(num2str(idx));
+   try
+    xlabel('VeloMaxAbs log'); ylabel([namevarsall{idx},' (ln)']);%ylabel(num2str(idx));
+   end 
    box on; drawnow();
    pause();
 end
 
 
 
-
-
-%% BETA vs MaxKeyVel
+%% BETA vs MaxKeyVel [NO]
 figure();
 scatter( MX(:,:,26), MX(:,:,42), 'b','filled');
 xlabel('beta');ylabel('maxKeyVelo [m/s]');
 
-%% NU vs MaxKeyVel
+%% NU vs MaxKeyVel [NO]
 figure();
-scatter( log(1./MX(:,:,27)), log(1./MX(:,:,42)), 'b','filled');
+scatter( log(1.*MX(:,:,27)), log(1.*MX(:,:,42)), 'b','filled');
 xlabel('nu');ylabel('maxKeyVelo [m/s]'); box on;
 
 
-%% PRTfoot*f1
-figure();
-scatter( 12*log2(MX(:,:,13)/440), (MX(:,:,13).*MX(:,:,29) ), 'b', 'filled');
-ylabel('PRT * f_1 (log10)');
-xlabel('$12log_2(f_1/440)$');
+
 
 %% PRT rad / PRT foot
 figure();
@@ -512,34 +526,14 @@ scatter( 12*log2(MX(:,:,13)/440), log10(MX(:,:,31) ), 'b', 'filled');
 ylabel('PRT$_{foot}$ / PRT$_{grv}$ (log10)');
 xlabel('$12log_2(f_1/440)$');
 
-%% t20foot / t20 groove
+%% t20rad - t20 groove [OK]
 
 figure();
-scatter( 12*log2(MX(:,:,13)/440),log10(MX(:,:,34)./MX(:,:,33) ), 'b', 'filled');
-ylabel('t$^{20}_{foot}$ / t$^{20}_{grv}$ (log10)');
+scatter( 12*log2(MX(:,:,13)/440), log10(MX(:,:,35)-MX(:,:,33) ), 'b', 'filled');
+ylabel('t$^{20}_{rad}$ / t$^{20}_{grv}$ (log10)');
 xlabel('$12log_2(f_1/440)$');
 
-
-%% Pgrv / Ppall
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), (MX(:,:,20)./MX(:,:,19) ), 'b', 'filled');
-ylabel('$P_{grv}/P_{pall}$');
-xlabel('$12log_2(f_1/440)$');
-
-%% Pfoot / Pgrv
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), (MX(:,:,21)./MX(:,:,20) ), 'b', 'filled');
-ylabel('$P_{foot}/P_{grv}$');
-xlabel('$12log_2(f_1/440)$');
-
-%% Prad / Pfoot
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), (MX(:,:,22)./MX(:,:,21) ), 'b', 'filled');
-ylabel('$P^o_{rad}/P^o_{foot}$');
-xlabel('$12log_2(f_1/440)$');
+box on; grid on;% ylim([0 2.4e-3]);
 
 %% t80 foot
 
@@ -548,12 +542,6 @@ scatter( 12*log2(MX(:,:,13)/440), 1e3*(MX(:,:,29)+MX(:,:,34) ), 'b', 'filled');
 ylabel('$t^{80}_{foot}$ [ms]');
 xlabel('$12log_2(f_1/440)$');
 
-%% t80 foot / T1 = t80foot *f1
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), log10(MX(:,:,13).*(MX(:,:,29)+MX(:,:,34) )), 'b', 'filled');
-ylabel('$t^{80}_{foot} * f_1$ (log10)','interpreter','latex');
-xlabel('$12log_2(f_1/440)$');
 
 
 %% t80 rad
@@ -563,17 +551,8 @@ scatter( 12*log2(MX(:,:,13)/440), 1e3*(MX(:,:,30)+MX(:,:,35) ), 'b', 'filled');
 ylabel('$t^{80}_{rad}$ [ms]');
 xlabel('$12log_2(f_1/440)$');
 
-%% t80 rad / T1 = t80rad *f1
 
-figure();
-scatter( 12*log2(MX(:,:,13)/440), MX(:,:,13).*(MX(:,:,30)+MX(:,:,35) ), 'b', 'filled');
-ylabel('$t^{80}_{rad} * f_1$');
-xlabel('$12log_2(f_1/440)$');
-
-
-
-
-%% VC factor groove
+%% VC factor groove [OK][But what does it mean?]
 
 factor = (MX(:,:,5)./(MX(:,:,3)*PalletDepth)).*sqrt( (MX(:,:,20) - MX(:,:,21) )./(MX(:,:,19)-MX(:,:,20)));
 

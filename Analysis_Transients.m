@@ -6,7 +6,7 @@ dt = 1/fs;
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 3 : 3%length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 1 : length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
 % close all;
@@ -168,7 +168,7 @@ for idx = 1 : length(lk_foot)
         ll     = fix(length(SSmask)*0.5): fix(length(SSmask)*0.75);
         SSmask = SSmask( ll );
         midpipedata = x(5, SSmask )'; midpipedata = midpipedata(:);
-        if 01 % <<<<<< % A04 (sample2) & A05 (samp.3) fail: they should be 155.56Hz and 164.81
+        if 1 % <<<<<< % A04 (sample2) & A05 (samp.3) fail: they should be 155.56Hz and 164.81
             [RR,lags] = xcorr(midpipedata);
             [~,locs]  = findpeaks(RR, 'MinPeakProminence',(max(RR)-std(RR)));
             T1estim   = mean(diff(locs))*dt;
@@ -225,7 +225,7 @@ for idx = 1 : length(lk_foot)
         A2max_over_A1simult(idx) = envel_second(a2max_idx)/envel_first(a2max_idx);
         A2max_over_A1target(idx) = a2max_val/mean(envel_first(end-fix(fs*0.500):end),'omitnan');
 
-        if 0 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
+        if 1 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
 
             TLIMS = [0 0.500];
             figure(23); clf;
@@ -303,9 +303,16 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
     opts.Display = 'Off';
     %                  (b)   (c)    (d)
     %                  beta  t_o    nu
-    opts.Lower      = [Ptar 300   1e-3   1e-4 ];
-    opts.Upper      = [Ptar 10e3  2      10    ]; 
-    opts.StartPoint = [Ptar 300   0.01   0.01];
+    % opts.Lower      = [Ptar 300   1e-3   1e-4 ];
+    % opts.Upper      = [Ptar 10e3  2      10    ]; 
+    % opts.StartPoint = [Ptar 300   0.01   0.01];
+    % opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
+
+    %                  (b)   (c)    (d)
+    %                  beta  t_o    nu
+    opts.Lower      = [Ptar 300   1e-3   1. ];
+    opts.Upper      = [Ptar 10e3  2      1. ]; 
+    opts.StartPoint = [Ptar 300   0.01   1.];
     opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
 
 
@@ -327,7 +334,7 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
     % end
 
     % Plot fit with data.
-    if 0
+    if 1
         figure(20);clf; 
         h = plot( FitRes{jdx}, xData, yData );
         legend( h, 'Pressure vs. Time', 'Fitted model', 'Location', 'NorthEast', 'Interpreter', 'none' );
@@ -339,7 +346,7 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
         title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(jdx)]), 'interpreter','none');        
         % ws = round(fs/30)+1;% po = 21;% try%     yfil = sgolayfilt(yData, po, ws);% catch%     yfil = sgolayfilt(yData, po, ws+1); end hold on;plot( xData, yfil, '--g');hold off;
         xlim([-0.005, 0.020]);
-        ylim([-50 700]);
+        % ylim([-50 700]);
         drawnow;
         frame = getframe(gcf);
         writeVideo(videoObj, frame);
@@ -402,7 +409,7 @@ Wm  = thedata.PR_params.Wm;
 
 datafilename = filename(1:end-4);
 
-if 1
+if 0
     save(['./processed/' datafilename '_PROCESSED.mat'],'f1','betafit','nufit',...
         'Area1','Area2','RJV','Wm','fs','PpalletB_targ','Pgroove_targ','t20groove',...
         'PRTgroove','Pfoot_targ','t20foot','PRTfoot','Ppipe_targ','t20mouth','PRTpipe',...
@@ -413,4 +420,4 @@ end
 
 
 end % BIGIDX of all files opened
-% close(videoObj);
+close(videoObj);
