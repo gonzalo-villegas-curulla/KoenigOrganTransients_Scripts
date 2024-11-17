@@ -9,7 +9,7 @@ dt = 1/fs;
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 1 : length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 12 : length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
 % close all;
@@ -241,9 +241,12 @@ for idx = 1 : length(lk_foot)
         Third    = envel_third/mean(envel_third(mask3));
         ll = t20idxp:  t80idxp; 
         try % Area integration of F2/F1@trans and F3/F1@transient
-            Area1(idx) = trapz([0:length(ll)-1]*dt, Second(ll)-Fund(ll)  );
-            Area2(idx) = trapz([0:length(ll)-1]*dt, Third(ll)-Fund(ll)  );
+            Area1(idx) = trapz(dt, Second(ll)-Fund(ll)  ); % equally spaced in time (simplify to dt)
+            Area2(idx) = trapz(dt, Third(ll)-Fund(ll)  );
         end
+
+
+        % We try to find point-wise descriptors to compare a2 with a1:
         [a2max_val,a2max_idx]   = max(envel_second(1:length(tmp_ft)));
         a2targ = mean(envel_second(end-fix(50*fs/f1estim): end));
         A2max_over_A1simult(idx) = envel_second(a2max_idx)/envel_first(a2max_idx);
@@ -384,11 +387,19 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<
     TRendidx   = length(footdatavec{jdx})-shiftonset+PRECUT;
 
     % Fit model to data.
-    % try
-        xData = timevec{jdx}(1:TRendidx)';
-        yData = footdatavec{jdx}(1:TRendidx);
-        [FitRes{jdx}, gof{jdx}] = fit( xData, yData', ft, opts );
-    % end
+    xData = timevec{jdx}(1:TRendidx)';
+    yData = footdatavec{jdx}(1:TRendidx);
+    [FitRes{jdx}, gof{jdx}] = fit( xData, yData', ft, opts );
+
+    if 1
+        figure(13); clf;
+        plot(xData, yData);
+        grid on; box on;
+        drawnow(); pause();
+
+
+
+    end
 
     % Plot fit with data.
     if 0
@@ -466,7 +477,7 @@ Wm  = thedata.PR_params.Wm;
 
 datafilename = filename(1:end-4);
 
-if 1
+if 0
     save(['./processed/' datafilename '_PROCESSED.mat'],'f1','betafit','nufit',...
         'Area1','Area2','RJV','Wm','fs','PpalletB_targ','Pgroove_targ','t20groove',...
         'PRTgroove','Pfoot_targ','t20foot','PRTfoot','Ppipe_targ','t20mouth','PRTpipe',...

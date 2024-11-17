@@ -304,15 +304,20 @@ grid on; xlabel('tessitura');ylabel('Qj/Qin'); box on;
 %% max(a2/a1) during transient
 % butter(4), filtfilt() of envel_first and envel_second
 % then search max within t20_f and t80_f+50*PRT
-mask = [1:22];mask(7)=[];
+
+mask = [1:22]; %mask(7)=[]; % >>> If you want to remove a single dataset
 
 figure();
 scatter( 12*log2(MX(:,mask,13)/440), MX(:,mask,48), 'b', 'filled');
 grid on; box on;
 xlabel('semitones wrt 440');ylabel('max(a2/a1 smooth) during trans.');
 
-figure();
+hold on;
+plot( 12*log2(F1MEAN(mask)/440),median(MX(:,mask, 48),1,'omitnan') ,  '-ro');
 
+
+
+figure();
 boxplot(MX(:,mask,48), 'Positions', 12*log2(F1MEAN(mask)/440), 'Widths',1);
 box on; grid on;
 xlabel({'xticks sample pipe','spacing semitones wrt 440'});
@@ -321,24 +326,52 @@ ylim([0 50]);
 
 
 
+%% Transient integrated spectral area between II and I
+figure();
+scatter( 12*log2(MX(:,:,13)/440),    MX(:,:,38).*MX(:,:,13)   ,'b' , 'filled');
+hold on;
+plot( 12*log2(F1MEAN/440), median( MX(:,:,38).*MX(:,:,13), 1, 'omitnan')  , '-ro');
+ylabel('T1 * trapez(dt, a_2 - a_1), (t20_p, t80_p) '); xlabel('tessitura semitones');
+xlabel('tessitura');
+grid on; box on;
+title('Integrated area comprised between a2 and a1 in the interval (t^{20}_p, t^{80}_p) normalized by oscill. period');
+ylim([-5 40]);
+
+%% Transient integrated (spectral) in area between III and I
+figure();
+scatter( 12*log2(MX(:,:,13)/440),    MX(:,:,39).*MX(:,:,13)   ,'b' , 'filled');
+% scatter( 12*log2(MX(:,:,13)/440), MX(:,:,13)   ,'b' , 'filled');
+hold on;
+plot( 12*log2(F1MEAN/440), median( MX(:,:,39).*MX(:,:,13), 1, 'omitnan')  , '-ro');
+
+ylabel('T1 * trapez(dt, a_3 - a_1), (t20_p, t80_p) '); xlabel('tessitura semitones');
+
+grid on; box on;
+title('Integrated area comprised between a3 and a1 in the interval (t^{20}_p, t^{80}_p) normalized by oscill. period');
+ylim([-5 20]);
+
+
+
+
+
+
+
 %%
+
+fs = 10e3;
+dt = 1/fs;
+t = 0:dt: 0.75;
+f = 1;
+w = 2*pi*f;
+x = 1*sin(w*t +pi/2) + 1;
+xx = ones(size(x));
+
 figure();
-scatter( 12*log2(MX(:,:,13)/440),  MX(:,:,38)  ,'b' , 'filled');
-hold on;
-scatter( 12*log2(MX(:,:,13)/440),  MX(:,:,39) ,'r'  , 'filled');
-ylabel('PRT Fourier comp integra areas'); xlabel('tessitura');
+plot(t, x); grid on; hold on;
+plot(t, xx);
+tot = x-xx;
 
-
-figure();
-scatter( MX(:,:,26).*MX(:,:,13),  MX(:,:,38)  ,'b' , 'filled');
-hold on;
-scatter( MX(:,:,26).*MX(:,:,13),  MX(:,:,39),'r'  , 'filled');
-xlabel('beta'); ylabel('spectrum integ areas');
-
-
-
-
-
+int = trapz(dt, tot)
 
 
 

@@ -21,7 +21,12 @@ In <root>
 in <root>/processed 
 * Qfac_anal.m (produces the modal maximal quality factors as per Blanc2010 paper)
 
+etc.
 
+
+
+## Some description of dependencies
+`plot_getScatteredData.m` is used to retrieve all XData and YData from a scatterplot with nans and multiples groups due to MX(transNum, datasetFile, variableNum)
 
 
 
