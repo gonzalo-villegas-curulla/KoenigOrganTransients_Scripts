@@ -89,6 +89,7 @@ envel_second = zeros(size(signal));
 
 separ = fix(0.95*fs*T1estim/1); % it should be T1/2, but this causes bleeding
 target_amp = mean(maxk(signal(end-fix(fs*NumPers*T1estim/2):end),NumPers)); 
+target_second = target_amp;
 
 % mask1 = same 
 mask2 = mask1(end)+1: find( max(0,signal)/target_amp>0.9, 1, 'first' ); 

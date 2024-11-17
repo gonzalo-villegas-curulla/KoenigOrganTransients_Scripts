@@ -1,8 +1,11 @@
+try
+    cd /run/media/gvc/ExtremeSSD/OrganPipe2023-2024/DataTransients/
+end 
 clc; clear; 
 fs = 51.2e3;
 dt = 1/fs;
     videoObj = VideoWriter('output_video.avi'); 
-    videoObj.FrameRate = 12; 
+    videoObj.FrameRate = 6; 
     open(videoObj);
 
 files=dir('A*.mat');
@@ -52,6 +55,11 @@ gofr2     = zeros(NT,1);
 
 A2max_over_A1simult = zeros(NT,1);
 A2max_over_A1target = zeros(NT,1);
+A2max_over_A2target = zeros(NT,1);
+a2max_vec = zeros(NT,1);
+pf_at_a2max = zeros(NT,1);
+pm_at_a2max = zeros(NT,1);
+max_a2_over_a1 = zeros(NT,1);
 
 
 % Retrieve transient location running (DetectVelocityPeaks.m) ============
@@ -168,21 +176,36 @@ for idx = 1 : length(lk_foot)
         ll     = fix(length(SSmask)*0.5): fix(length(SSmask)*0.75);
         SSmask = SSmask( ll );
         midpipedata = x(5, SSmask )'; midpipedata = midpipedata(:);
-        if 1 % <<<<<< % A04 (sample2) & A05 (samp.3) fail: they should be 155.56Hz and 164.81
-            [RR,lags] = xcorr(midpipedata);
-            [~,locs]  = findpeaks(RR, 'MinPeakProminence',(max(RR)-std(RR)));
-            T1estim   = mean(diff(locs))*dt;
-            f1estim   = 1/T1estim;
-        else
-            fprintf("Xcorr failed for f1estimation, trying with YIN...\n")
-            KnownFreq = 164.81; % A04 (sample2) & A05 (samp.3) fail: they should be 155.56Hz and 164.81
-            P.sr      = fs;
-            P.minf0 = 0.9*KnownFreq;
-            P.maxf0 = 1.1*KnownFreq;
-            Ryin    = yin( midpipedata  ,P);
-            f1estim = mean(Ryin.f0_Hz,'omitnan');
-            T1estim = mean(1./f1estim,'omitnan');
+
+        samplepipe = filename(2:3);
+
+        switch samplepipe
+            case '04'
+                % fprintf("f1 YIN 155Hz, ")
+                KnownFreq = 155.56; 
+                P.sr      = fs;
+                P.minf0 = 0.9*KnownFreq;
+                P.maxf0 = 1.1*KnownFreq;
+                Ryin    = yin( midpipedata  ,P);
+                f1estim = mean(Ryin.f0_Hz,'omitnan');
+                T1estim = mean(1./f1estim,'omitnan');
+            case '05'
+                % fprintf("f1 YIN 164Hz, ")
+                KnownFreq = 164.81; 
+                P.sr      = fs;
+                P.minf0 = 0.9*KnownFreq;
+                P.maxf0 = 1.1*KnownFreq;
+                Ryin    = yin( midpipedata  ,P);
+                f1estim = mean(Ryin.f0_Hz,'omitnan');
+                T1estim = mean(1./f1estim,'omitnan');
+            otherwise
+                % fprintf("f1 xcorr, ");
+                [RR,lags] = xcorr(midpipedata);
+                [~,locs]  = findpeaks(RR, 'MinPeakProminence',(max(RR)-std(RR)));
+                T1estim   = mean(diff(locs))*dt;
+                f1estim   = 1/T1estim;
         end
+
         f1(idx) = f1estim;
         TN = fix(T1estim*fs);
 
@@ -221,11 +244,52 @@ for idx = 1 : length(lk_foot)
             Area1(idx) = trapz([0:length(ll)-1]*dt, Second(ll)-Fund(ll)  );
             Area2(idx) = trapz([0:length(ll)-1]*dt, Third(ll)-Fund(ll)  );
         end
-        [a2max_val,a2max_idx] = max(envel_second);
+        [a2max_val,a2max_idx]   = max(envel_second(1:length(tmp_ft)));
+        a2targ = mean(envel_second(end-fix(50*fs/f1estim): end));
         A2max_over_A1simult(idx) = envel_second(a2max_idx)/envel_first(a2max_idx);
         A2max_over_A1target(idx) = a2max_val/mean(envel_first(end-fix(fs*0.500):end),'omitnan');
+        A2max_over_A2target(idx) = a2max_val/target_second; 
 
-        if 1 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
+        % For transient characterisation after fig6, CFA-Ernoult2016:
+        pf_at_a2max(idx) = tmp_ft(a2max_idx);
+        pm_at_a2max(idx) = pipecurr(a2max_idx);
+        a2max_vec(idx) = a2max_val;
+    
+        % ======================================================
+        % Compute and plot the ratio between a2 and a1 to find the max
+        % between t20_foot and t80_foot, after having smoothed them with
+        % butterworth() filtfilt() with a length of N periods (Def. 5).
+
+        [bbb,aaa]=butter(4, (f1estim/5)/(fs/2));
+        
+        dat1 = filtfilt(bbb,aaa,envel_first);
+        dat2 = filtfilt(bbb,aaa,envel_second);
+        ratio_dats = dat2./dat1;
+
+        max_a2_over_a1(idx) = max(ratio_dats(  t20idxp :  t80idxp+fix(50*PRTfoot(idx)*fs)   ));
+
+        if 0
+            figure(1);clf;hold on;
+
+            plot([envel_first;envel_second]');grid on;
+            % xlim([0.5,1.5]*1e4);
+            xlim([5e3, t80idxp+fix(50*PRTfoot(idx)*fs)]);
+
+            plot(dat1,'--k');
+            plot(dat2,'--k');
+            
+            plot(t20idxp*[1,1],[0 a2max_val],'--k');plot(t80idxp*[1,1],[0 a2max_val],'--k');
+            
+            yyaxis right;plot(dat2./dat1,'g');ylim([0,1]*20); box on;
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none');              
+            drawnow();
+            % pause(1);
+            frame = getframe(gcf);
+            writeVideo(videoObj, frame);
+        end
+        % ===================================================
+
+        if 0 % <<Plot envelopes, t20, t80, 1-2-3 harmonics, and total rad pressure>>
 
             TLIMS = [0 0.500];
             figure(23); clf;
@@ -259,7 +323,7 @@ for idx = 1 : length(lk_foot)
 
                 
 end % Close loop over all transients of current file
-
+fprintf("\n");
 % Period (found by yin sometimes):
 T1 = 1./f1;
 
@@ -273,7 +337,6 @@ T1 = 1./f1;
 % PREPARE FIT OPTIONS ===========================
 
 ft = fittype( 'a./(1+d*exp(-b*(x-c))).^(1/d)', 'independent', 'x', 'dependent', 'y' );
-                        
 opts = fitoptions( 'Method', 'NonlinearLeastSquares' , 'TolFun', 1e-12);
 opts.Display = 'Off';
 
@@ -291,32 +354,26 @@ opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
 PRECUT = fix(0.020*fs); % (Def. 0.015 s) Shift Data away from time zero
 fprintf("Starting beta nu fits...");
 
- % lkjdfsgoiuhvtpo4q3qut34qiubytvel
- % bternklrwlukvtewku348io34i7yn3qq5qbvihubtwitrw4ibltr4wtviw7478w45ibyw4a5liw45iw4854wy5i4wyi5w45hlibw4va5lnhw5wal8i5aw4v5
-
-for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
+for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     Ptar = Pfoot_targ(jdx);
     
     ft = fittype( 'Ptar./(1+d*exp(-b*(x-c))).^(1/d)', 'independent', 'x', 'dependent', 'y' );
     opts = fitoptions( 'Method', 'NonlinearLeastSquares' , 'TolFun', 1e-12);
     opts.Display = 'Off';
-    %                  (b)   (c)    (d)
-    %                  beta  t_o    nu
-    % opts.Lower      = [Ptar 300   1e-3   1e-4 ];
-    % opts.Upper      = [Ptar 10e3  2      10    ]; 
-    % opts.StartPoint = [Ptar 300   0.01   0.01];
-    % opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
-
-    %                  (b)   (c)    (d)
-    %                  beta  t_o    nu
-    opts.Lower      = [Ptar 300   1e-3   1. ];
-    opts.Upper      = [Ptar 10e3  2      1. ]; 
-    opts.StartPoint = [Ptar 300   0.01   1.];
+    %                       (b)   (c)    (d)
+    %                       beta  t_o    nu
+    opts.Lower      = [Ptar 300   1e-3   3e-3 ];
+    opts.Upper      = [Ptar 10e3  2      10    ]; 
+    opts.StartPoint = [Ptar 300   0.01   0.5];
     opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
 
-
-
+    %                  (b)   (c)    (d)
+    %                  beta  t_o    nu
+    % opts.Lower      = [Ptar 300   1e-3   1. ];
+    % opts.Upper      = [Ptar 10e3  2      1. ]; 
+    % opts.StartPoint = [Ptar 300   0.01   1.];
+    % opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
     
     shiftonset       = find(foot_trans{jdx}/Pfoot_targ(jdx)>0.1,1,'first') ;
 
@@ -334,7 +391,7 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
     % end
 
     % Plot fit with data.
-    if 1
+    if 0
         figure(20);clf; 
         h = plot( FitRes{jdx}, xData, yData );
         legend( h, 'Pressure vs. Time', 'Fitted model', 'Location', 'NorthEast', 'Interpreter', 'none' );
@@ -409,15 +466,18 @@ Wm  = thedata.PR_params.Wm;
 
 datafilename = filename(1:end-4);
 
-if 0
+if 1
     save(['./processed/' datafilename '_PROCESSED.mat'],'f1','betafit','nufit',...
         'Area1','Area2','RJV','Wm','fs','PpalletB_targ','Pgroove_targ','t20groove',...
         'PRTgroove','Pfoot_targ','t20foot','PRTfoot','Ppipe_targ','t20mouth','PRTpipe',...
-        'KeyMovingTime','gofr2','A2max_over_A1simult','A2max_over_A1target');
+        'KeyMovingTime','gofr2','A2max_over_A1simult','A2max_over_A1target',...
+        'A2max_over_A2target','pf_at_a2max','pm_at_a2max','a2max_vec','max_a2_over_a1');    
+
     
     fprintf('Ellapsed time with this file: %1.2f \n', toc(tinit));
 end
 
 
 end % BIGIDX of all files opened
+
 close(videoObj);

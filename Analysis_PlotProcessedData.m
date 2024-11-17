@@ -1,3 +1,6 @@
+try
+    cd /run/media/gvc/ExtremeSSD/OrganPipe2023-2024/DataTransients/
+end 
 
 clc, clear;
 addpath('./processed/');
@@ -99,7 +102,7 @@ QFAC1     = part1.*part2;
 % Allocate memory
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MX           = nan*ones(NumTransMax, length(files), 44);
+MX           = nan*ones(NumTransMax, length(files), 48);
 
 vecmeanfreqs = zeros(length(files),1);
 PRTMX        = nan*ones(NumTransMax, length(files), 3);
@@ -219,6 +222,11 @@ for idx = 1 : length(files)
 
     MX(find(A2max_over_A1simult),idx,43) = A2max_over_A1simult;
     MX(find(A2max_over_A1target),idx,44) = A2max_over_A1target;
+    MX(find(A2max_over_A2target),idx,45) = A2max_over_A2target;
+    MX(find(pf_at_a2max - pm_at_a2max),idx,46) = pf_at_a2max - pm_at_a2max; % DeltaP (foot-mouth)
+    MX( find(a2max_vec),idx,47)= a2max_vec;
+    MX(find(max_a2_over_a1), idx, 48) = max_a2_over_a1;
+    
     
     
    
@@ -258,11 +266,108 @@ end
 % [36]:t20 foot-groove  [37]:t20 rad-foot
 % [38]:Area1            [39]:Area2
 % [40]:Sin/Spall        [41]:Sjet/Sin       [42]: KeyVel
-% [43]:A2max_over_A1simult   [44]: A2max_over_A1target
+% [43]:A2max_over_A1simult [44]: A2max_over_A1target [45]: a2max_over_a2target
+% [46] DeltaP(foot-mouth)_at_a2max
+% [47] a2max_vec    [48]: max_a2_over_a1 (after
+% smooth)\in(t20_f,t80_f+50PRT**)(** the 50PRT doubtful)
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%       ANALYSIS PLOTS
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Steady-State analysis
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+rho = 1.2;
+
+      %   S_in                     SS target    SS target
+      %   geom                      Preserv      Pfoot 
+Qin = 1*MX(:,:,5) .* sqrt( 2/rho*( MX(:,:,19) - MX(:,:,21) ) );
+
+       % Geom                      SS target   SS target
+       % S_j                        P_foot      P_mouth
+Qj  = 1*MX(:,:,6).*sqrt( 2/rho * ( MX(:,:,21) -      0     ) );
+
+figure();
+                % All the f1's
+scatter( 12*log2(  MX(:,:,13   )/440) , abs(Qin-Qj)./Qin ,'b','filled');
+% scatter( 12*log2(  MX(:,:,13   )/440) , Qj./Qin ,'b','filled');
+grid on; xlabel('tessitura');ylabel('Qj/Qin'); box on;
+% ylim([0 1]);
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%       Transient analysis
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% max(a2/a1) during transient
+% butter(4), filtfilt() of envel_first and envel_second
+% then search max within t20_f and t80_f+50*PRT
+mask = [1:22];mask(7)=[];
+
+figure();
+scatter( 12*log2(MX(:,mask,13)/440), MX(:,mask,48), 'b', 'filled');
+grid on; box on;
+xlabel('semitones wrt 440');ylabel('max(a2/a1 smooth) during trans.');
+
+figure();
+
+boxplot(MX(:,mask,48), 'Positions', 12*log2(F1MEAN(mask)/440), 'Widths',1);
+box on; grid on;
+xlabel({'xticks sample pipe','spacing semitones wrt 440'});
+ylabel('max(a2/a1 smooth) during trans.'); 
+ylim([0 50]);
+
+
+
+%%
+figure();
+scatter( 12*log2(MX(:,:,13)/440),  MX(:,:,38)  ,'b' , 'filled');
+hold on;
+scatter( 12*log2(MX(:,:,13)/440),  MX(:,:,39) ,'r'  , 'filled');
+ylabel('PRT Fourier comp integra areas'); xlabel('tessitura');
+
+
+figure();
+scatter( MX(:,:,26).*MX(:,:,13),  MX(:,:,38)  ,'b' , 'filled');
+hold on;
+scatter( MX(:,:,26).*MX(:,:,13),  MX(:,:,39),'r'  , 'filled');
+xlabel('beta'); ylabel('spectrum integ areas');
+
+
+
+
+
+
+
+
+
+%% Fig6, CFA Ernoult2016
+
+Uj_at_a2max = sqrt(MX(:,:,46)*2/1.2);
+rho = 1.2;
+c = 340;
+theta_a2max = Uj_at_a2max./(MX(:,:,9).*MX(:,:,13));
+
+a2_nondim = MX(:,:,47)./(rho*c*Uj_at_a2max);
+
+figure();
+% scatter( 12*log2(MX(:,:,13)/440),a2_nondim);
+scatter(theta_a2max, 1e3*a2_nondim,'filled');
+xlabel('theta at t=a2max');
+ylabel('a2max / rho c Uj at a2max');
+grid on; box on;
+xlim([0 11]);
+
+
+
+%% a2max over a2 target
+figure();
+scatter( 12*log2(MX(:,:,13)/440), MX(:,:,45), 'b', 'filled');
+xlabel('freq in semitones');
+ylabel('a2 max over a2 target');
+grid on; box on;ylim([0 5]);
 
 %% Pmouth as per massage to equations 9-10-11 and alpha_vc = 1;
 
@@ -305,12 +410,16 @@ title('Hydrodynamic delay','interpreter','latex');ylim([0 10])
 %% t20_foot normalized by tau_f =  [HYDRODYNAMIC DELAY]
 
 figure();
-scattera( 12*log2(MX(:,:,13)/440),( c * MX(:,:,34).*MX(:,:,5)./MX(:,:,2) ), 'b', 'filled');
+scatter( 12*log2(MX(:,:,13)/440),( c * MX(:,:,34).*MX(:,:,5)./MX(:,:,2) ), 'b', 'filled');
 ylabel('$ \frac{t^{20}_f}{\tau_f} = \frac{c_o \times t^{20}_{f} \mathcal{S}_{in}}{V_f}$','interpreter','latex','Rotation',0);
 xlabel('$12\times log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 title('Hydrodynamic delay','interpreter','latex');
 
 
+
+%%
+figure();
+scatter(MX(:,:,29).*MX(:,:,13), (MX(:,:,43)), 'b','filled' );
 
 %% Sj / Sin [OK]
 
@@ -322,7 +431,7 @@ xlabel('$12log_2(f_1/440)$'); box on; grid on;
 
 %% a2max/a1(@a2max) (mouth rad) [OK]
 figure();
-scatter(12*log2(MX(:,:,13)/440), log10(MX(:,:,43)), 'b','filled' );
+scatter(12*log2(MX(:,:,13)/440), (MX(:,:,43)), 'b','filled' );
 xlabel({'Sample pipe xticks','12log2(f1/440) spacing'},'interpreter','latex');
 ylabel('a2max/a1(@a2max) (log$_{10}$)','interpreter','latex'); 
 box on; grid on;
@@ -330,9 +439,9 @@ box on; grid on;
 % f1lump
 
 figure();
-funh = boxplot( log10(MX(:,:,43)) , 'Positions',12*log2(F1MEAN/440), 'Widths',1);
-xlabel('Sample pipe','interpreter','latex');
-ylabel('a2max/a1(@a2max) (log$_{10}$)','interpreter','latex');
+funh = boxplot( log10(abs(MX(:,:,43))) , 'Positions',12*log2(F1MEAN/440), 'Widths',1);
+% xlabel('Sample pipe','interpreter','latex');
+% ylabel('a2max/a1(@a2max) (log$_{10}$)','interpreter','latex');
 
 
 
@@ -346,6 +455,8 @@ ylabel('a2max/a1target (lin)','interpreter','latex'); box on; grid on;
 figure();boxplot( (MX(:,:,44)), 'Positions',12*log2(F1MEAN/440), 'Widths',1);
 xlabel({'sample pipe xticks','12 log2(f1/440) spacing'},'interpreter','latex');
 ylabel('a2max/a1target (lin)','interpreter','latex');
+
+
 
 
 %% PRTfoot/T1 (w.r.t tessitura) [T1 for normalization??? it's hydrodynamic]
