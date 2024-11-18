@@ -6,7 +6,10 @@ clc, clear;
 addpath('./processed/');
 % ============= LOADS =========================
 
-files = dir('./processed/A*PROCESSED.mat');
+thepath = './processed/';
+thepath = './processed/FIT_with_plus3PRT/';
+filecard = 'A*PROCESSED.mat';
+files = dir([thepath,filecard]);
 
 
 % Resoantor length: (56)
@@ -102,10 +105,9 @@ QFAC1     = part1.*part2;
 % Allocate memory
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MX           = nan*ones(NumTransMax, length(files), 48);
-
-vecmeanfreqs = zeros(length(files),1);
-PRTMX        = nan*ones(NumTransMax, length(files), 3);
+MX            = nan*ones(NumTransMax, length(files), 49);
+vecmeanfreqs  = zeros(length(files),1);
+PRTMX         = nan*ones(NumTransMax, length(files), 3);
 PRTpipeMedian = zeros(length(files),1);
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -116,7 +118,11 @@ PRTpipeMedian = zeros(length(files),1);
 for idx = 1 : length(files)
     
     filename = files(idx).name;
-    load(filename);
+    try
+        load(filename);
+    catch
+        load([thepath,filename]);
+    end
     
     numpipe    = str2num(filename(2:3));    % MODIFY IF NECSSARY<<<<<<<<<<
     
@@ -220,12 +226,13 @@ for idx = 1 : length(files)
     
     MX( : , idx, 42)            = KeyVel(:,idx);
 
-    MX(find(A2max_over_A1simult),idx,43) = A2max_over_A1simult;
-    MX(find(A2max_over_A1target),idx,44) = A2max_over_A1target;
-    MX(find(A2max_over_A2target),idx,45) = A2max_over_A2target;
+    MX(find(A2max_over_A1simult),idx,43)       = A2max_over_A1simult;
+    MX(find(A2max_over_A1target),idx,44)       = A2max_over_A1target;
+    MX(find(A2max_over_A2target),idx,45)       = A2max_over_A2target;
     MX(find(pf_at_a2max - pm_at_a2max),idx,46) = pf_at_a2max - pm_at_a2max; % DeltaP (foot-mouth)
-    MX( find(a2max_vec),idx,47)= a2max_vec;
-    MX(find(max_a2_over_a1), idx, 48) = max_a2_over_a1;
+    MX( find(a2max_vec),idx,47)                = a2max_vec;
+    MX(find(max_a2_over_a1), idx, 48)          = max_a2_over_a1;
+    MX(find(gofr2), idx, 49)                   = gofr2;
     
     
     
@@ -255,21 +262,25 @@ end
 
 % [13]:f1          [14]:theta        [15]:Qpall2groove   
 % [16]:Qgrv2foot   [17]:Qjet         [18]:Remplissage  
-% [19]:Ppall targ  [20]:Pgrove targ  [21]:Pfoot targ    [22]:Prad targ
+% [19]:Ppall targ  [20]:Pgrove targ  [21]:Pfoot targ  [22]:Prad targ
 
-% [23]:Ptarg grv-pall     [24]:Ptarg foot-grv     [25]:Ptarg rad-foot
+% [23]:Ptarg grv-pall       [24]:Ptarg foot-grv       [25]:Ptarg rad-foot
 
-% [26]:beta             [27]:nu   
-% [28]:PRTgrv           [29]:PRTfoot        [30]:PRTrad
-% [31]:PRTfoot/grv      [32]:PRTrad/foot  
-% [33]:t20 groove       [34]:t20 foot       [35]:t20 rad
-% [36]:t20 foot-groove  [37]:t20 rad-foot
-% [38]:Area1            [39]:Area2
-% [40]:Sin/Spall        [41]:Sjet/Sin       [42]: KeyVel
-% [43]:A2max_over_A1simult [44]: A2max_over_A1target [45]: a2max_over_a2target
-% [46] DeltaP(foot-mouth)_at_a2max
-% [47] a2max_vec    [48]: max_a2_over_a1 (after
-% smooth)\in(t20_f,t80_f+50PRT**)(** the 50PRT doubtful)
+% [26]:beta                 [27]:nu   
+
+% [28]:PRTgrv               [29]:PRTfoot              [30]:PRTrad
+% [31]:PRTfoot/grv          [32]:PRTrad/foot  
+% [33]:t20 groove           [34]:t20 foot             [35]:t20 rad
+% [36]:t20 foot-groove      [37]:t20 rad-foot
+% [38]:Area1                [39]:Area2
+% [40]:Sin/Spall            [41]:Sjet/Sin             [42]: KeyVel
+
+% [43]: A2max_over_A1simult [44]: A2max_over_A1target [45]: a2max_over_a2target
+% [46]: DeltaP(foot-mouth)_at_a2max
+% [47]: a2max_vec        [48]: max_a2_over_a1 (after smooth)\in(t20_f,t80_f+50PRT)
+% [49]: gofr2 (r-squared goodness of logistic fit)
+
+
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -300,6 +311,15 @@ grid on; xlabel('tessitura');ylabel('Qj/Qin'); box on;
 %       Transient analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Assess the goodness of fit for the cases: t80+1PRT, t80+2PRT, t80+3PRT
+figure();
+scatter( 12*log2(MX(:,:,13)/440), MX(:,:,49), 'b', 'filled');
+xlabel('tessitura semitones');
+ylabel('R-squared goodness of fit');
+grid on; box on;
+
+
 
 %% max(a2/a1) during transient
 % butter(4), filtfilt() of envel_first and envel_second
@@ -519,6 +539,8 @@ scatter( 1./MX(:,:,26), MX(:,:,29)  , 'b','filled');
 xlabel('$\beta^{-1}$', 'interpreter','latex');
 ylabel('PRT$_{foot}$ [s]', 'Interpreter','latex');
 box on; grid on;
+xlim([0 2.2e-3]);
+ylim([0 4.5e-3]);
 
 %% beta vs exp(nu) [NO]
 figure();
