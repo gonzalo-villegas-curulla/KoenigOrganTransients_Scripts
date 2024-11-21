@@ -28,6 +28,7 @@ hola.m
 A44_pitchG_20240301_190919_NoGroove.mat.NoGroove
 plot_getScatteredData.m
 Analysis_TransientBis.m
+Story
 
 # ########### DATA files difficult to purge without ignoring others with same regex @##################
 

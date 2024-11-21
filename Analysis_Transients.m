@@ -9,7 +9,7 @@ dt = 1/fs;
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 1 : length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 11 :11% length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
 % close all;
@@ -199,6 +199,17 @@ for idx = 1 : length(lk_foot)
                 Ryin    = yin( midpipedata  ,P);
                 f1estim = mean(Ryin.f0_Hz,'omitnan');
                 T1estim = mean(1./f1estim,'omitnan');
+
+            case '17'
+                % fprintf("f1 YIN 329Hz, ")
+                KnownFreq = 329.0;
+                P.sr      = fs;
+                P.minf0 = 0.9*KnownFreq;
+                P.maxf0 = 1.1*KnownFreq;
+                Ryin    = yin( midpipedata  ,P);
+                f1estim = mean(Ryin.f0_Hz,'omitnan');
+                T1estim = mean(1./f1estim,'omitnan');
+                
             otherwise
                 % fprintf("f1 xcorr, ");
                 [RR,lags] = xcorr(midpipedata);
@@ -359,7 +370,7 @@ fprintf("Starting beta nu fits...");
 fighand = figure(20);clf; 
 axhand = axes(fighand); cla;
 
-NumPRTs = 1;
+NumPRTs = 1; %length of data after t80foot for the fit
 
 for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
 
@@ -382,7 +393,7 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
 
 
     % Plot fit with data.
-    if 1
+    if 0
         
         plot(axhand, FitRes{jdx}, xData, yData);
         legend('Pressure vs. Time', 'Fitted model', 'Location', 'SouthEast', 'Interpreter', 'none' );
@@ -443,4 +454,4 @@ end
 
 end % BIGIDX of all files opened
 
-close(videoObj);
+% close(videoObj);
