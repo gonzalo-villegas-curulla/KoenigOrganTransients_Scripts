@@ -9,7 +9,7 @@ dt = 1/fs;
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 11 :11% length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 5 :  length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
 % close all;
@@ -75,13 +75,16 @@ lk_foot_end = lk_foot' + fix(fs*DurNotesInS);
 
 % A prediction of transient length to allocate
 LENretro = fix(0.100*fs); 
-LENpost  = fix(0.600*fs); 
+LENpost  = fix(2.2*fs + 0*0.600*fs);  % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PUT IT BACK TO 0.600f*s
 
 AvTimeDur     = 0.500; % 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Segment and loop over all transients of current file
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+fighand = figure(20);clf; 
+axhand = axes(fighand); cla;
 
 for idx = 1 : length(lk_foot)
         
@@ -128,6 +131,7 @@ for idx = 1 : length(lk_foot)
       
         Pgroove_targ(idx) = mean(x(3, carefulmask ))-OFFSET;        
         t20idx            = find(tmp_gr/Pgroove_targ(idx) >0.2, 1, 'first');
+        t20idxgr = t20idx;
         t80idx            = find(tmp_gr/Pgroove_targ(idx) >0.8, 1, 'first');        
         % t20groove(idx) = dt*(t20idx-LENretro -lk_foot(idx)); % in [s]
         t20groove(idx)    = dt*(t20idx-LENretro ); % in [s]
@@ -142,26 +146,18 @@ for idx = 1 : length(lk_foot)
         
 
         % FOOT  /!\  ~~~~~~~~~~~~~~~~~
-        tmp_ft = x(4, mask );
-        OFFSET = mean(tmp_ft(1:100));
-        tmp_ft = tmp_ft - OFFSET;
+        tmp_ft          = x(4, mask );
+        OFFSET          = mean(tmp_ft(1:100));
+        tmp_ft          = tmp_ft - OFFSET;
         foot_trans{idx} = tmp_ft;
         
         Pfoot_targ(idx) = mean(x(4, carefulmask  ))- OFFSET;
         t20idx = find(tmp_ft/Pfoot_targ(idx) >0.2, 1, 'first');
         t80idx = find(tmp_ft/Pfoot_targ(idx) >0.8, 1, 'first');
-%         t20foot(idx) = dt*(t20idx-LENretro -lk_foot(idx)  ); % in seconds
         t20foot(idx) = dt*(t20idx-LENretro  ); % in seconds
         PRTfoot(idx) = dt*(t80idx  - t20idx );
         
-        if 0
-            figure(12);clf;plot(tmp_ft);  hold on;
-            plot([1,length(tmp_ft)],[1,1]*Pfoot_targ(idx)*0.8,'--k');
-            plot([1,length(tmp_ft)],[1,1]*Pfoot_targ(idx)*0.2,'--k');
-        end
-
-      
-        % RADIATED SOUND/PIPE/MOUTH  /!\  ~~~~~~~~~~~~~~~~~
+                % RADIATED SOUND/PIPE/MOUTH  /!\  ~~~~~~~~~~~~~~~~~
         
         tmp_wholepipe    = x(5, mask_pipe);
         tmp_wholepipe    = tmp_wholepipe - mean(tmp_wholepipe);
@@ -209,6 +205,16 @@ for idx = 1 : length(lk_foot)
                 Ryin    = yin( midpipedata  ,P);
                 f1estim = mean(Ryin.f0_Hz,'omitnan');
                 T1estim = mean(1./f1estim,'omitnan');
+
+            case '24'
+                % fprintf("f1 YIN 493Hz, ")
+                KnownFreq = 493.0;
+                P.sr      = fs;
+                P.minf0 = 0.9*KnownFreq;
+                P.maxf0 = 1.1*KnownFreq;
+                Ryin    = yin( midpipedata  ,P);
+                f1estim = mean(Ryin.f0_Hz,'omitnan');
+                T1estim = mean(1./f1estim,'omitnan');
                 
             otherwise
                 % fprintf("f1 xcorr, ");
@@ -220,6 +226,8 @@ for idx = 1 : length(lk_foot)
 
         f1(idx) = f1estim;
         TN = fix(T1estim*fs);
+
+        
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % FOURIER DECOMPOSITION of Prad
@@ -283,6 +291,64 @@ for idx = 1 : length(lk_foot)
 
         max_a2_over_a1(idx) = max(ratio_dats(  t20idxp :  t80idxp+fix(50*PRTfoot(idx)*fs)   ));
 
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %        VISUALIZATIONS
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        if 0
+            %%% PHASE-SPACE TRANSIENT Pgroove-Pfoot
+            maskvid = 1 +0*t20idx:t80idx+fix(1*fs*PRTfoot(idx)) ;
+                midmask = fix(0.5*length(tmp_ft)):fix(0.5*length(tmp_ft)) + fix(20*fs/f1estim);
+            % plot(axhand, tmp_gr(maskvid)/Pgroove_targ(idx) ,   tmp_ft(maskvid)/Pfoot_targ(idx), 'linewidth',2 );                 
+            plot(axhand, tmp_gr(midmask)/Pgroove_targ(idx) ,   tmp_ft(midmask)/Pfoot_targ(idx), 'linewidth',0.5 ); 
+            plot(axhand, (tmp_ft(midmask)-Pfoot_targ(idx))/Ppipe_targ(idx),  tmp_rad(midmask)/Ppipe_targ(idx), 'linewidth',0.5);
+
+            grid on; box on; hold(axhand, 'on');
+                plot(axhand, tmp_gr(t20idxgr)/Pgroove_targ(idx)*[1,1],[0,0.5],'--r');
+                plot(axhand, [0,1.0],tmp_ft(t20idx)/Pfoot_targ(idx)*[1,1],'--r')
+                plot([1,1],[0,1],'--k'); plot([0,1],[1,1],'--k'); plot([0,1],[0,1],'--k');
+            hold(axhand, 'off');
+
+            xlabel('Pgroove'); ylabel('Pfoot'); legend('Pf/Pgr','t20','location','NorthWest');
+            axis equal;xlim([0.7 1.3]); ylim([0.7 1.3]);
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none');        
+
+            drawnow();
+            frame = getframe(gcf);
+            writeVideo(videoObj, frame);
+        end
+
+        if 1
+            N1period = fix(fs/f1estim);
+            HA       = fix(0.2*N1period);
+            sliding_mask = [ 1 : 10*N1period] + 0*HA;
+            while sliding_mask(end) < length(tmp_rad)
+                xwin = (tmp_ft(sliding_mask)-Pfoot_targ(idx))/Ppipe_targ(idx);
+                ywin = tmp_rad(sliding_mask)/Ppipe_targ(idx);
+                if 1
+                    plot(axhand, xwin, ywin, 'linewidth',0.5); hold on;
+                    xlim(3.0*[-1,1]); ylim(3.0*[-1,1]);
+                    plot([0,0],[-1,1],'--r');plot([-1,1],[0,0],'--r');plot([-1,1],[-1,1],'--r');plot([-1,1],[1,-1],'--r'); 
+                else
+                    plot3(axhand, xwin,[1:length(sliding_mask)]*dt ,ywin,'linewidth',1); hold on; 
+                    % axis equal;
+                    xlim(3.0*[-1,1]); zlim(3.0*[-1,1]);
+                    view(141.42,21.9);
+                end
+
+                box on; grid on; 
+                xlabel('(Pfoot-Pfoottarget) / Ppipetarget'); ylabel('Ppipe / Ppipetarget');
+                title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none');        
+                hold off;
+                sliding_mask = sliding_mask + HA;
+                
+                drawnow();
+                % pause();
+            end
+            
+        end
+
+        % ===================================================
         if 0
             figure(1);clf;hold on;
 
@@ -372,7 +438,7 @@ axhand = axes(fighand); cla;
 
 NumPRTs = 1; %length of data after t80foot for the fit
 
-for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file
+if 0 % for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<<<<<<<<<<<<<<<<<
 
     Ptar = Pfoot_targ(jdx);
     
@@ -440,7 +506,7 @@ Wm  = thedata.PR_params.Wm;
 
 datafilename = filename(1:end-4);
 
-if 1
+if 0
     save(['./processed/' datafilename '_PROCESSED.mat'],'f1','betafit','nufit','Ptargfit','delayfit',...
         'Area1','Area2','RJV','Wm','fs','PpalletB_targ','Pgroove_targ','t20groove',...
         'PRTgroove','Pfoot_targ','t20foot','PRTfoot','Ppipe_targ','t20mouth','PRTpipe',...
@@ -454,4 +520,4 @@ end
 
 end % BIGIDX of all files opened
 
-% close(videoObj);
+close(videoObj);

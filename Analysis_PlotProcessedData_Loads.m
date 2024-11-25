@@ -13,7 +13,7 @@ LP = Lp_m; clear Lp_m
 load('./processed/Geometry/Vf_m3.mat'); 
 VF = Vf_m3; clear Vf_m3
 
-% Width of pallet window slot (56)
+% Width of pallet window SLOT (56)
 load('./processed/Geometry/KoenigPalletWindWidth_m.mat');
 PW    = palletwinwidth_m; clear palletwinwidth_m
 
@@ -52,6 +52,10 @@ load('./processed/Geometry/f1ManipMean.mat');
 load('./processed/MaxNegKeyVelocities.mat');
 KeyVel = abs(MAXNEGVELOS);
 
+% Actual pallet valve dimensions (56 values)
+load('./PalletValveDimensions.mat');
+PVG = PalletValveGeometry; clear PalletValveGeometry;
+
 % ============= PARAMETERS =========================
 
 rho   = 1.2;
@@ -60,15 +64,21 @@ maskpipes  = [3,4,5,6,7,9,10,11,13,15,17,19,24,25,27, 29,32, 34,37,39,41,44]';
 
 
 
-PalletDepth = 1e-3*129.8; %  [m]
-PALLAREA    = PalletDepth * PW;  % Slot area covered by the valve [m^2]
+PalletWinDepth = 1e-3*129.8; %  [m]
+PALLwinAREA    = PalletWinDepth * PW;  % <<Slot>> area covered by the valve [m^2]
 VGROOVE     = PW *0.51*0.05;
+
+PalletValveWidth = PVG(:,2);
+PalletValveVerticalMaxDisplacement = PVG(:,4);
+PalletLength = 0.157;
+PalletValveStrokeArea = (PalletValveWidth + PalletLength).*PalletValveVerticalMaxDisplacement ;
+
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Coefs and params 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Vena contractai:
+% Vena contracta(s):
 VCpallet = 0.62;
 VCinlet  = 0.62;
 VCjet    = 0.95;
@@ -85,7 +95,7 @@ RADSmask = RADS(maskpipes);
 DPmask   = DP(maskpipes);
 LPmask   = LP(maskpipes);
 
-n = 1; % mode
+n = 1; % mode / Method Blanc2010
 chi       = 3e-5 * sqrt(n*F1MEAN)./RADSmask;
 OM        = n*pi*c./(LPmask + 1.2*RADSmask);
 part1     = OM/(2*c);
@@ -98,7 +108,7 @@ QFAC1     = part1.*part2;
 % Allocate memory
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MX            = nan*ones(NumTransMax, length(files), 49);
+MX            = nan*ones(NumTransMax, length(files), 50);
 vecmeanfreqs  = zeros(length(files),1);
 PRTMX         = nan*ones(NumTransMax, length(files), 3);
 PRTpipeMedian = zeros(length(files),1);
@@ -132,6 +142,7 @@ for idx = 1 : length(files)
     oneWM      = WM(numpipe); % Mouth W cutup
     oneDP      = DP(numpipe); % Diameter pipe
     oneVGROOVE = VGROOVE(numpipe);
+    onePalletValveStrokeArea = PalletValveStrokeArea(numpipe);
     
     % #16 data:
     onef1      = F1MEAN(idx);
@@ -152,6 +163,8 @@ for idx = 1 : length(files)
     MX(:, idx, 10)   = oneDP*ones(NumTransMax,1);
     MX(:, idx, 11)   = oneVGROOVE*ones(NumTransMax,1);
     MX(:, idx, 12)   = oneQFAC1*ones(NumTransMax,1);
+
+    MX(:, idx, 50) = onePalletValveStrokeArea*ones(NumTransMax,1);
     
     
     
@@ -159,7 +172,7 @@ for idx = 1 : length(files)
     
     % S1/S2 factor, Spall/SJET(Pf,Pgrv) Remplissage factor:
     Remplissage = real(sqrt(Pfoot_targ ./ (Pgroove_targ-Pfoot_targ ) ) ); 
-    Qpall2grv   = VCpallet * PALLAREA(numpipe) * real(sqrt( (PpalletB_targ - Pgroove_targ) *2/rho));
+    Qpall2grv   = VCpallet * PALLwinAREA(numpipe) * real(sqrt( (PpalletB_targ - Pgroove_targ) *2/rho));
     Qgrv2ft     = VCinlet  * INLET(numpipe)    * real(sqrt( (Pgroove_targ  - Pfoot_targ  ) *2/rho));
     Qjet        = VCjet    * SJET(numpipe)     * real(sqrt( (Pfoot_targ    - 0           ) *2/rho));
     
@@ -214,7 +227,7 @@ for idx = 1 : length(files)
     MX(find(betafit)            , idx, 39)   = Area2(:);
     
     
-    MX(:           , idx, 40)   = ones(NumTransMax,1)*(INLET(numpipe)/PALLAREA(numpipe));
+    MX(:           , idx, 40)   = ones(NumTransMax,1)*(INLET(numpipe)/PALLwinAREA(numpipe));
     MX(:           , idx, 41)   = ones(NumTransMax,1)*(SJET(numpipe)/INLET(numpipe));
     
     MX( : , idx, 42)            = KeyVel(:,idx);
@@ -226,6 +239,8 @@ for idx = 1 : length(files)
     MX(find(a2max_vec),idx,47)                 = a2max_vec;
     MX(find(max_a2_over_a1), idx, 48)          = max_a2_over_a1;
     MX(find(gofr2), idx, 49)                   = gofr2;
+    
+
     
     
     

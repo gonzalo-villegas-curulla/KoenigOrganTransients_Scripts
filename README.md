@@ -28,8 +28,8 @@ etc.
 ## Some description of dependencies
 `plot_getScatteredData.m` is used to retrieve all XData and YData from a scatterplot with nans and multiples groups due to MX(transNum, datasetFile, variableNum)
 
-
-
-
-
 (the fundamental search algorithm 'yin' should be in your MATLAB search path)
+
+## Quick summary ##
+`Analysis_Transients.m` will process the raw data and create `_PROCESSED.mat` files.
+`Analysis_PlotProcessedData.m` takes the `_PROCESSED.mat` data and aides visualization. It uses `Analysis_PlotProcessedData_Loads.m` for loads and population of variables.
