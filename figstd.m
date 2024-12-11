@@ -32,14 +32,14 @@ if length(axhan)>1
         end
     end
 else % There can be plots with yyaxis right...
-    axhan.XAxis.FontSize = textsize;
-    axhan.XAxis.Label.Interpreter = theinterp;
-    axhan.XAxis.Label.FontSize    = textsize;
+    axhan.XAxis.FontSize             = textsize;
+    axhan.XAxis.Label.Interpreter    = theinterp;
+    axhan.XAxis.Label.FontSize       = textsize;
     axhan.XAxis.TickLabelInterpreter = theinterp;
         
     try
-        axhan.YAxis.Label.Interpreter = theinterp;
-        axhan.YAxis.Label.FontSize    = textsize;
+        axhan.YAxis.Label.Interpreter    = theinterp;
+        axhan.YAxis.Label.FontSize       = textsize;
         axhan.YAxis.TickLabelInterpreter = theinterp;
         for jdx = 1:length(axhan(idx).Children)
            axhan(idx).Children(jdx).MarkerSize = MSZ;

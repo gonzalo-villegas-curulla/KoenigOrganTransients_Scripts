@@ -36,7 +36,7 @@ addpath('./processed/');
 
 
 rho = 1.2;
-co = 340;
+co  = 340;
 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -44,82 +44,51 @@ co = 340;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Vf vs Vgroove [OK][there's something interesting/intriguing...]
 
-figure();
-subplot(121);
-scatter( 12*log2(MX(:,:,13)/440), log10(MX(:,:,11)./MX(:,:,2)), 'b', 'filled');
-box on; grid on;
-ylabel('$Vfoot / Vgroove \ (log_{10})$ [n.u.]');
-xlabel('Tessitura [semitones]');
-
-subplot(122);
-scatter(  1e3*(MX(:,:,11)), 1e3*(MX(:,:,2)) , 'b', 'filled' );
-xlabel('$V_{gr} \ [1e3 \times m^3]$');
-ylabel('$V_f \ [1e3 \times m^3]$');
-grid on; box on; xlim([0 0.45]);
-
-%% Vf vs Sin vs Sj
-figure();
-scatter( (MX(:,:,2)./MX(:,:,3))  ,  (MX(:,:,6)), 'b', 'filled');
-grid on; box on;
-xlabel('$V_f$ / PalletValve-Slot-Width  $[m^2]$');
-ylabel('$S_j \ [m^2]$');
-ylim([0 7e-5]);
-
-yyaxis right;
-scatter((MX(:,:,2)./MX(:,:,3))  ,  (MX(:,:,5)), 'filled');
-ylabel('$S_{in} \ [m^2]$');
-ylim([0 7e-5]);
 
 
 %% Sj / Sin [OK]
 
 figure();
-scatter( 12*log2(MX(:,:,13)/440), log10(MX(:,:,6)./MX(:,:,5) ), 'b', 'filled');
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median((MX(:,:,6)./MX(:,:,5)),1,'omitnan'), 'kd', 'filled');
 ylabel('$\mathcal{S}_j / \mathcal{S}_{in} \ (log_{10})$ [n.u.]', 'interpreter','latex');
-xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on; ylim([0 1.5]);
+
+
+
+
+%% Sj / Sin */ Vf^0.33 [interactions]
+
+figure();
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(   (MX(:,:,6)./MX(:,:,5))./MX(:,:,2).^(1/3)   ,1,'omitnan'), 'kd', 'filled');
+ylabel('$\mathcal{S}_j / \mathcal{S}_{in} /Vf^{(1/3)}\ (log_{10})$ [n.u.]', 'interpreter','latex');
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;ylim([0 20]);
+
 
 %% S_palletvalve, S_slot, S_tonehole, S_in, S_j 
 
 
 figure(); hold on; grid on; box on;
 
-scatter(freqlogax, 1e6*MX(:,:,50), 'b', 'filled');       % mean = 8.4 cm^2 % pallet valve stroke
-scatter(freqlogax, 1e6*MX(:,:,3)*0.1298, 'r', 'filled'); % mean = 16.3 cm^2 % pallet slot window
-scatter(freqlogax, 1e6*pi*(0.5*MX(:,:,4)).^2,'k','filled' ); % tone hole area
-scatter(freqlogax, 1e6*MX(:,:,5), 'g', 'filled'); % foot inlet
-scatter(freqlogax, 1e6*MX(:,:,6), 'm', 'filled'); % foot outlet
+scatter(freqlogax, median(1e6*MX(:,:,50),1,'omitnan'), 'b', 'filled');       % mean = 8.4 cm^2 % pallet valve stroke
+scatter(freqlogax, median(1e6*MX(:,:,3)*0.1298,1,'omitnan'), 'r', 'filled'); % mean = 16.3 cm^2 % pallet slot window
+scatter(freqlogax, median(1e6*pi*(0.5*MX(:,:,4)).^2,1,'omitnan'),'k','filled' ); % tone hole area
+scatter(freqlogax, median(1e6*MX(:,:,5),1,'omitnan'), 'g', 'filled'); % foot inlet
+scatter(freqlogax, median(1e6*MX(:,:,6),1,'omitnan'), 'm', 'filled'); % foot outlet
 ylabel('mm^2'); xlabel('tessitura [semitones]');
-
-%%
-
-figure();
-scatter(freqlogax, MX(:,:,50)./MX(:,:,5), 'b', 'filled');
+ax=gca; ax.YScale = 'log';
 
 
-%%
-figure();
-% scatter( MX(:,:,50) , MX(:,:,20)); ylim([0 820]);
-% scatter( MX(:,:,50) , abs(MX(:,:,20)-MX(:,:,19))./MX(:,:,19)    ); ylim([0 1]);%xlim([0 12e-4]);
-% scatter( MX(:,:,3) , abs(MX(:,:,20)-MX(:,:,19))./MX(:,:,19)    ); ylim([0 1]);%xlim([0 12e-4]);
-% scatter( (pi*(0.5*MX(:,:,4)).^2)./MX(:,:,50) , abs(MX(:,:,20)-MX(:,:,19))./MX(:,:,19)    ); ylim([0 1]);%xlim([0 12e-4]);
-scatter( median((pi*(0.5*MX(:,:,4)).^2)./MX(:,:,50),1,'omitnan') , median(abs(MX(:,:,20)-MX(:,:,19))./MX(:,:,19),1,'omitnan') ,'b','filled'  );% ylim([0 1]);box on; grid on;
 
 
-%% Pressure drops versus cross sections
 
-figure(); % Pall2Groove
-
-scatter( median((pi*(0.5*MX(:,:,4)).^2)./MX(:,:,50),1,'omitnan') , median(abs(MX(:,:,20)-MX(:,:,19))./MX(:,:,19),1,'omitnan') ,'b','filled'  );% ylim([0 1]);box on; grid on;
-
-
-figure(); % Pall2Foot
-
-% scatter( median(MX(:,:,6),1,'omitnan')  , median(  abs(MX(:,:,21)-MX(:,:,19))./MX(:,:,19),1,'omitnan')  , 'b', 'filled'); 
-scatter( median(MX(:,:,6)./MX(:,:,50),1,'omitnan')  , median(  abs(MX(:,:,21)-MX(:,:,19))./MX(:,:,19),1,'omitnan')  , 'b', 'filled'); 
-
-%%
+        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %       Steady-State analysis
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+%% Pressure drops versus cross sections [not yet there...]
 figure();hold on;
     errorbar(   median((pi*(0.5*MX(:,:,4)).^2)./MX(:,:,50),1,'omitnan')  ,    median(abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19) , 1, 'omitnan'),...
         std( abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19), [], 1,'omitnan'),...
@@ -135,109 +104,119 @@ figure();hold on;
 
 % xlim([-20 25]);ylim([0 1]); grid on; box on;
 % ylabel('Pressure drops normalized by $P_{rsv}$','interpreter','latex');
-xlabel('$12\times log_2 (f_1/440 \ Hz)$','interpreter','latex');
+xlabel('$...$','interpreter','latex');
 legend('$\Delta P_{pall2gr}/P_{pall} = |P^{\oplus}_{gr}-P^{\oplus}_{pall}|/P^{\oplus}_{pall}$',...
     '$\Delta P_{gr2ft}\ /P_{pall} = |P^{\oplus}_{ft}-P^{\oplus}_{grv}|/P^{\oplus}_{pall}$',...
     '$\Delta P_{ft2m}\ /P_{pall}  = |\langle P^{\oplus}_{m}\rangle-P^{\oplus}_{ft}|/P^{\oplus}_{pall}$','interpreter','latex');
+box on; grid on;
 
-
-%%
-figure();
-
-scatter( median( (MX(:,:,5))./MX(:,:,50),1,'omitnan')  , median(  abs(MX(:,:,20))./MX(:,:,19),1,'omitnan')  , 'b', 'filled'); 
-
-
-        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %       Steady-State analysis
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% Foot flow conservation ["appealing" result, but something is wrong]
-      %   S_in                     SS target    SS target
-      %   geom                      Preserv      Pfoot 
+%% Foot flow conservation and Gamma function [OK]
+      
 Qin = 1.0*MX(:,:,5) .* sqrt( 2/rho*( MX(:,:,19) - MX(:,:,21) ) );
-
-       % Geom                      SS target   SS target
-       % S_j                        P_foot      P_mouth
-Qj  = 1*MX(:,:,6).*sqrt( 2/rho * ( MX(:,:,21) -      0     ) );
-
-figure();
-scatter( 12*log2(  MX(:,:,13   )/440) , abs(Qin-Qj)./Qin ,'b','filled');
-% scatter( 12*log2(  MX(:,:,13   )/440) , Qj./Qin ,'b','filled');
-grid on; xlabel('tessitura [semitones]');ylabel('Qj/Qin [m^3/s]'); box on;
-ylim([0 1]);
+Qj  = 1.0*MX(:,:,6).*sqrt( 2/rho * ( MX(:,:,21) -      0     ) );
+ 
+FitFlowConserv = polyfit( median(MX(:,:,6)./MX(:,:,5),1,'omitnan') , median(Qj./Qin,1,'omitnan') ,1);
 
 figure();
-errorbar( 12*log2(F1MEAN/440) , median( abs(Qin-Qj)./Qin,1,'omitnan'), std( abs(Qin-Qj)./Qin,1, 'omitnan'),'k', 'marker','x','linestyle','none');
-grid on; ylim([0 1]);
-xlabel('$12\times log_2 (f_1 / 440 \ Hz)$','interpreter','latex');
-ylabel('$|Q_{in}-Q_j|/Q_{in}$','interpreter','latex');
-
-% Qj/Qin wrt to Sj/Sin
-figure();
-errorbar(  median(MX(:,:,6)./MX(:,:,5),1,'omitnan') , median( abs(Qj)./Qin,1,'omitnan'), std( abs(Qj)./Qin,1, 'omitnan'),'k', 'marker','x','linestyle','none');
-grid on; ylim([0 1]);
+errorbar(  median(MX(:,:,6)./MX(:,:,5),1,'omitnan') , median( Qj./Qin,1,'omitnan'), std( abs(Qj)./Qin,1, 'omitnan'),'k', 'marker','d','linestyle','none');
+% errorbar(  median(12*log2(MX(:,:,13)/440),1,'omitnan') , median( abs(Qj)./Qin,1,'omitnan'), std( abs(Qj)./Qin,1, 'omitnan'),'k', 'marker','x','linestyle','none');
+grid on; ylim([0 1]); hold on;
 xlabel('$ \mathcal{S}_j / \mathcal{S}_{in}$','interpreter','latex');
-ylabel('$Q_j/Q_{in}$','interpreter','latex');
-xlim([0 1.4]);
+ylabel('$\Gamma (\mathcal{S})$','interpreter','latex');
 
+querypoints = [0:1e-2:1.5];
+plot(querypoints, polyval(FitFlowConserv, querypoints), '--k');
 
+text(0.8,0.55,sprintf('$y=%1.3f x + %1.3f$',FitFlowConserv(1),FitFlowConserv(2) ), 'interpreter','latex');
 
 
 %% Theta
 figure();
 
-scatter( 12*log2(MX(:,:,13)/440), MX(:,:,14), 'b', 'filled');
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(MX(:,:,14),1,'omitnan'), 'dk', 'filled');
 grid on; box on;
-xlabel('Tessitura [semitones]');
-ylabel('\theta = u_j/W_m f_1');
+xlabel('$12 \times log_2 (f_1 /  440 Hz) $', 'interpreter','latex');
+ylabel('$\theta = u_j/f_1 W_m$','interpreter','latex'); ylim([0 12]);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Target pressures study
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Ptarg differences [OK] all wrt to reservoir, in SS grv and rsv have the same pressure [OK, final]
-% then we loose half to enter the foot and the other half is lost in the
-% mouth outing: so the model is mouthpressure=0
-
-% we can neglect the press drop between resrv and groove
-% there are 2 significant press drops, of equivalent amgnitude, to enter
-% foot and to exit the foot
-
-figure();
-scatter(12*log2(MX(:,:,13)/440), abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19) ,'blue','filled');hold on;
-scatter(12*log2(MX(:,:,13)/440), abs(MX(:,:,19)-MX(:,:,21))./MX(:,:,19) ,'red','filled');hold on;
-scatter(12*log2(MX(:,:,13)/440), abs(MX(:,:,21)-0 )./MX(:,:,19), 'green','filled');
-xlabel('$12 \times log_2(f_1/f_{ref})$','interpreter','latex');
-ylabel('Target pressure differences [n.u.]','interpreter','latex');
-title('Ptarg differences: blue=reserv2grv, red=grv2foot,green=foottomouth. ALL scaled by resrv  press.');
-grid on; box on;
-
-%% Ptarg differences [OK] all wrt to reservoir, in SS grv and rsv have the same pressure [final]
+%% Ptarg differences all wrt to reservoir, in SS grv and rsv have the same pressure [OK,final]
 figure();hold on;
-errorbar( 12*log2(F1MEAN/440), median(abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19) , 1, 'omitnan'),...
-    std( abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19), [], 1,'omitnan'),...
-    'k','linestyle','none','marker','o');
-errorbar( 12*log2(F1MEAN/440), median(abs(MX(:,:,20)-MX(:,:,21))./MX(:,:,19) , 1, 'omitnan'),...
-    std( abs(MX(:,:,20)-MX(:,:,21))./MX(:,:,19), [], 1,'omitnan'),...
-    'k','linestyle','none','marker','^');
-errorbar( 12*log2(F1MEAN/440), median(abs(MX(:,:,21)-0)./MX(:,:,19) , 1, 'omitnan'),...
-    std( abs(MX(:,:,21)-0         )./MX(:,:,19), [], 1,'omitnan'),...
-    'k','linestyle','none','marker','x');
+    plot( 12*log2(F1MEAN/440), median(abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19) , 1, 'omitnan'),...       
+        'k','linestyle','none','marker','o');
+    plot( 12*log2(F1MEAN/440), median(abs(MX(:,:,20)-MX(:,:,21))./MX(:,:,19) , 1, 'omitnan'),...
+        'k','linestyle','none','marker','^');
+    plot( 12*log2(F1MEAN/440), median(abs(MX(:,:,21)-0)./MX(:,:,19) , 1, 'omitnan'),...
+        'k','linestyle','none','marker','x');
 
 xlim([-20 25]);ylim([0 1]); grid on; box on;
-% ylabel('Pressure drops normalized by $P_{rsv}$','interpreter','latex');
 xlabel('$12\times log_2 (f_1/440 \ Hz)$','interpreter','latex');
-legend('$\Delta P_{pall2gr}/P_{pall} = |P^{\oplus}_{gr}-P^{\oplus}_{pall}|/P^{\oplus}_{pall}$',...
-    '$\Delta P_{gr2ft}\ /P_{pall} = |P^{\oplus}_{ft}-P^{\oplus}_{grv}|/P^{\oplus}_{pall}$',...
-    '$\Delta P_{ft2m}\ /P_{pall}  = |\langle P^{\oplus}_{m}\rangle-P^{\oplus}_{ft}|/P^{\oplus}_{pall}$','interpreter','latex');
+legend('$\widetilde{\Delta P}_{pall2grv} = |P^{\oplus}_{gr}-P^{\oplus}_{pall}|/P^{\oplus}_{pall}$',...
+    '$\widetilde{\Delta P}_{grv2ft}\  = |P^{\oplus}_{ft}-P^{\oplus}_{grv}|/P^{\oplus}_{pall}$',...
+    '$\widetilde{\Delta P}_{ft2m}\ \   = |\langle P^{\oplus}_{m}\rangle-P^{\oplus}_{ft}|/P^{\oplus}_{pall}$','interpreter','latex');
+
+%% Pfoot target versus Sj/Sin [ok]
+
+ % [Can we predict PfootTarg just by Sj and Sin?]
+ 
+ Prsv   = 820.83;
+ Prsv   = 1;
+ S_axes = linspace(0,1.5, 1e3);
+ 
+ % [1] DATA measured: ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ Sgeom_ratio_measured = median(MX(:,:,6)./MX(:,:,5),1,'omitnan');
+ Qj_over_Qin    = median(  (MX(:,:,6).*sqrt(2/rho*(MX(:,:,21)-0)))  ./  (MX(:,:,5).*sqrt(2/rho*(MX(:,:,20)-MX(:,:,21)))) ,...
+           1,'omitnan');
+ 
+ 
+FitFlowConserv = polyfit( Sgeom_ratio_measured , Qj_over_Qin ,1);
+  
+A = FitFlowConserv(1); B = FitFlowConserv(2);
+Gamma    = (A * S_axes + B); 
+GammaInv = 1./Gamma;
+ 
+Sgeom_measured = median(MX(:,:,6)./MX(:,:,5),1,'omitnan');
+Seff_measured  = 0.5477*Sgeom_measured + 0.1398;
+ 
+% gamma_measured = median(MX(:,:,6)./MX(:,:,5).*sqrt(MX(:,:,21)./abs(MX(:,:,21)-MX(:,:,19))),1,'omitnan');
+gamma_measured  = Qj_over_Qin;
+ 
+ 
+% [2] MODEL:  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 
+Pfoot_model = Prsv./(1 + (GammaInv.*S_axes).^2);
+x = linspace(0,2.0,1e2);
+
+figure(); hold on;
+if 0           % NO:
+ plot( 1./gamma_measured .* Sgeom_ratio_measured, median(MX(:,:,21)./MX(:,:,19),1,'omitnan') , 'xk');
+ y = 1./(1+x.^2);
+end
+if 0            % Poor:
+    plot( 1./(A * Sgeom_ratio_measured + B).*Sgeom_ratio_measured , median(MX(:,:,21)./MX(:,:,19),1,'omitnan') , 'dk');
+    y = 1./(1+x.^2); % <<< ??????
+end
+if 1            % Best:
+    plot( Sgeom_ratio_measured , median(MX(:,:,21)./MX(:,:,19),1,'omitnan') , 'dk','markerfacecolor','k');
+ y = 1./(1 + (x./(A*x+B)).^2);
+ xlim([0 1.5]);
+end
+ 
+ 
+ plot(x, y, '--k');
+ ylim([0 1]);
+ 
+ grid on; box on; 
+ ylabel('$P_f^{\oplus}/P_{pall}^{\oplus}$ [n.u.]', 'interpreter','latex');
+ xlabel('$\frac{\mathcal{S}_j}{ \mathcal{S}_{in}}$ [n.u.]', 'interpreter','latex');
 
 
 %% uj/uin (no vena contracta) [OK]
 
 figure();
-scatter( 12*log2(MX(:,:,13)/440) , MX(:,:,18), 'b', 'filled');
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan') , median(MX(:,:,18),1,'omitnan'), 'dk', 'filled');
 grid on; box on;
 ylim([0 1]);
 xlabel('Tessitura [semitones]'); title('Remplissage');
@@ -246,43 +225,11 @@ xlabel('Tessitura [semitones]'); title('Remplissage');
  % Additional hypothesis on why we don't see the flow consrevation:
  % the foot is a big volume with a small channel at the entrance and output
  % so we have a jet at the entrance dissipated by turbulence
- % and a second at the output
-
- %% Pfoot target versus Sj/Sin [ok][final?]
-
- %%% PREDICT Pfoot_target from geometrical ratios                /!\
-
- figure();
- scatter( (MX(:,:,6)./MX(:,:,5)).^2, MX(:,:,21)./MX(:,:,19) , 'b', 'filled');
- grid on; box on; 
- % ylim([0 600]); xlim([0 1.4]);
- ylabel('$P_f^{targ} [Pa]$', 'interpreter','latex');
- xlabel('$\mathcal{S}_j/\mathcal{S}_{in}$ [n.u.]', 'interpreter','latex');
-
- % [Can we predict PfootTarg just by Sj and Sin?]
- Prsv = 820.83;
- Prsv = 1;
- xvals = linspace(0,1.5, 1e3);
-
-% yvals = Prsv./(1 + ( (MX(:,:,6)./MX(:,:,5))    ).^2);
-yvals = Prsv./(1 + ( xvals).^2);
-% yvals = Prsv./(1 + ( xvals+0.6).^2); % FIT THIS 0.6 VALUE!!!!!!!!!!!!!!!!!
-% yvals = Prsv./(1 + ( xvals/0.7).^2); % FIT THIS 0.6 VALUE!!!!!!!!!!!!!!!!!
-yvals = Prsv./(1 + ( xvals*0.5 + 1.00).^2); % FIT THIS 0.6 VALUE!!!!!!!!!!!!!!!!!
-
-alpha=1.2;
-yvals2 = Prsv*(1 - alpha*xvals.^2)./(1 + xvals.^2*(1-alpha));
-
-hold on;
-plot(xvals, yvals, '--r');
-plot(xvals, yvals2, '--g');
-
-% ylim([0 800]); 
-ylim([0 1]);
+ % and a second at the output....? so?
 
 
-% ft = fittype( 'Prsv./(1 + ( xx*a + b).^2)','independent','xx','dependent','y');
-ft = fittype( 'Prsv./(1 + (a*xx+ b).^2 )','independent','xx','dependent','y');
+%%
+ft = fittype( 'Prsv./(1 + (a*xx + b).^2 )','independent','xx','dependent','y');
 
 opts = fitoptions( 'Method', 'NonlinearLeastSquares' , 'TolFun', 1e-12);
 opts.Display = 'Off';
@@ -296,53 +243,19 @@ yData = median( MX(:,:,21)./MX(:,:,19)  , 1,'omitnan');
 figure();
 plot(fitres, xData, yData); ylim([0 1]); grid on;xlim([0 1.5]);
 
-%%
-
-Pf_targ    = MX(:,:,21);
-Preservoir = 820; % [Pa]
-
-figure(); hold on; grid on; box on;
-scatter( sj./sin, Pf_targ, 'b', 'filled'); ylim([0 LM]);
-
-section_sample = [0:1e-5:1.5]; % Sj/Sin
-Pfoot_model    = Preservoir./( 1 + (rho/2*section_sample +0.95).^2);
-
-plot(section_sample,Pfoot_model,'--r');
-xlabel('Sj/Sin'); ylabel('Pf target [Pa]');
+%% ????? Pmouth as per massage to equations 9-10-11 and alpha_vc = 1;
 
 
+Pm =  MX(:,:,21) - (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,20) - MX(:,:,21));
+Pm =  MX(:,:,21) + (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,21) - MX(:,:,20));
 
-%%
+figure();
 
+scatter(  12*log2(MX(:,:,13)/440), log10(Pm) , 'filled'); box on; grid on;
 
-scaledPfootTarg = MX(:,:,21)./MX(:,:,19);
-
-sgr =  PalletDepth*MX(:,:,3);
-sin = MX(:,:,5);
-sj  = MX(:,:,6);
-arearats = (sj./sin).^2 - (sin./sgr).^2;
-
-
- figure();
- scatter(arearats  , scaledPfootTarg , 'b', 'filled');
- grid on; ylim([0 1]);
-
- %%
- zeist = 12*log2(MX(:,:,13)/440);
- figure(); hold on;
- plot(zeist,  log10((sj./sin).^2) , 'bo');
- plot(zeist,  log10((sj./sgr).^2) , 'ro');
- plot(zeist,  log10((sin./sgr).^2) , 'go');
-
-
-
- %%
- alpha = 0.7;
- numer = 1-alpha*xvals.^2;
- denom = 1 + xvals.^2 *(1-alpha);
- figure();
- plot( xvals, numer./denom);
-
+xlabel('$12\times  log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+ylabel('$P_{m}$ [Pa] ($log_{10}$)','interpreter','latex');
+title('Expected mouth-rad pressure as per eqs. 9-10-11 of model and Qj=Qin, no alpha_vc');
 
 
 
@@ -352,47 +265,190 @@ arearats = (sj./sin).^2 - (sin./sgr).^2;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% %% Assess the goodness of fit for the cases: t80+1PRT, t80+2PRT, t80+3PRT
-% figure();
-% scatter( 12*log2(MX(:,:,13)/440), MX(:,:,49), 'b', 'filled');
-% xlabel('tessitura semitones');
-% ylabel('R-squared goodness of fit');
-% grid on; box on;
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Groove 2 Foot
+% Groove 2 Foot analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%% t20foot - t20groove [groove delay][OK]
+
+%% t20grv - t20 foot [ACOUSTIC DELAY][OK] 06/12/2024[[[[[[06/12/2024 [to keep]]]]]]]
 
 figure();
-scatter( 12*log2(MX(:,:,13)/440) , 1e3*( MX(:,:,34) - MX(:,:,33)), 'b', 'filled');
-xlabel('tessitura [semitones]');
-ylabel('t^{20}_{foot} - t^{20}_{groove} [ms]');
-box on; grid on; ylim([0 2.2]);
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(1e3*abs(MX(:,:,33)-MX(:,:,34) ),1,'omitnan') , 'b', 'filled');
+ylabel('$t^{20}_{grv}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 
-yyaxis right;
-scatter( 12*log2(MX(:,:,13)/440), 1e3*MX(:,:,33),'color', "#D95319", 'MarkerFaceColor',	"#D95319");
-ylabel('t^{20}{groove} [ms]');
-ylim([0 10]);
-title('groove-foot delay');
+ylim([0 2]);
+
+%% PRTf and PRTgrv overlaid
+figure();
+scatter( 12*log2(F1MEAN/440),...
+    1e3*median(MX(:,:,28),1,'omitnan') , 'xk');
+hold on;
+scatter( 12*log2(F1MEAN/440),...
+    1e3*median(MX(:,:,29),1,'omitnan') , 'ok');
+legend('PRT grv','PRT f');ylim([0 4]);
+box on; grid on;
+
+
+%% t80grv - t80 foot [ACOUSTIC DELAY][OK] [[[[[[06/12/2024 [to keep]]]]]]]
+
+figure();
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), ...
+    median(   MX(:,:,33)+MX(:,:,28)-MX(:,:,29)-MX(:,:,34) ,1,'omitnan') ,...
+    'b', 'filled');
+
+ylabel('$t^{20}_{grv}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+
+%% t80grv - t80 foot [ACOUSTIC DELAY][OK] 06/12/2024 [to keep][[[[[[06/12/2024 [to keep]]]]]]]
+
+figure();
+scatter( median( MX(:,:,2)./MX(:,:,11),1,'omitnan'), ...
+    median(  1e3* abs(MX(:,:,33)+MX(:,:,28)-MX(:,:,29)-MX(:,:,34)) ,1,'omitnan') ,...
+    'b', 'filled');
+
+%% t20_foot normalized by tau_f = Vf/(c_o * S_in) [HYDRODYNAMIC DELAY]
+
+figure();
+scatter( 12*log2(F1MEAN/440),median( co * MX(:,:,34).*MX(:,:,5)./MX(:,:,2) ,1,'omitnan'), 'b', 'filled');
+ylabel('$ t^{20}_f / \tau_f $ with $\tau_f = V_f / c_o  \mathcal{S}_{in}$','interpreter','latex');
+xlabel('$12\times log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+title('Hydrodynamic delay','interpreter','latex');
+ylim([0 1.3]);
+
+%% t20_foot normalized by tau_f = Vf/(u_in * S_in) [HYDRODYNAMIC DELAY]
+
+tau_f = MX(:,:,2)./(MX(:,:,5).*sqrt( 2/rho*(MX(:,:,20)-MX(:,:,21))) );
+
+figure();
+scatter( 12*log2(F1MEAN/440), median(MX(:,:,34)./tau_f,1,'omitnan') , 'b', 'filled');
+ylabel('$ t^{20}_f / \tau_f $ with $\tau_f = V_f / u_{in}  \mathcal{S}_{in}$','interpreter','latex');
+xlabel('$12\times log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+title('Hydrodynamic delay','interpreter','latex');
+ylim([0 0.2]);
+
+%% t20_foot normalized by tau_f = Vf/(u_j * S_j) [HYDRODYNAMIC DELAY][interesting...]
+
+tau_f = MX(:,:,2)./(MX(:,:,6).*sqrt( 2/rho*(MX(:,:,21)-0*MX(:,:,21))) );
+
+figure();
+scatter( 12*log2(F1MEAN/440), median(MX(:,:,34)./tau_f,1,'omitnan') , 'b', 'filled');
+xlabel('Tessitura [semitones]');
+ylabel('$ t^{20}_f / \tau_f $ with $\tau_f = V_f / u_{j}  \mathcal{S}_{j}$','interpreter','latex');
+grid on; box on;
+ylim([0 0.055]);
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Acoustic
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% t20rad - t20 foot [ACOUSTIC DELAY][OK]
+
+figure();
+scatter( 12*log2(MX(:,:,13)/440), 1e3*(MX(:,:,35)-MX(:,:,34) ) , 'b', 'filled');
+ylabel('$t^{20}_{rad}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+title('Acoustic delay','interpreter','latex');ylim([0 80])
+
+%% (t20rad-t20foot)/T1 [ACOUSTIC DELAY][OK]
+
+figure();
+scatter( 12*log2(MX(:,:,13)/440), (MX(:,:,35)-MX(:,:,34) ).*MX(:,:,13), 'b', 'filled');
+ylabel('$( t^{20}_{rad} - t^{20}_{foot} ) /T_1 $','interpreter','latex');%, 'Rotation',0);
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+title('Acoustic delay','interpreter','latex');%ylim([0 ])
+
+
+%% PRTrad/T1 (w.r.t tessitura) [OK]
+figure();
+errorbar(    median(12*log2(MX(:,:,13)/440),1,'omitnan'), ...
+    median(MX(:,:,30).*MX(:,:,13), 1, 'omitnan'),...
+    std(MX(:,:,30).*MX(:,:,13), 'omitnan'), ...
+    'linestyle','none', 'marker', 'o', 'color', 'k', 'linewidth', 1); 
+
+xlabel('$12 \times log_2(f_1/f_{ref})$','interpreter','latex');
+ylabel('$ PRT_{rad} /T_1$','interpreter','latex');
+box on; grid on;
+
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PRT's 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% PRTfoot/T1 (w.r.t tessitura) [T1 for normalization??? it's hydrodynamic]
+figure();
+
+tau_f = MX(:,:,2)./(MX(:,:,5).*sqrt( 2/rho*(MX(:,:,20)-MX(:,:,21))) );
+
+% scatter(12*log2(MX(:,:,13)/440), (MX(:,:,29).*MX(:,:,13)), 'b','filled'); ylim([0 2]);
+scatter(12*log2(MX(:,:,13)/440), MX(:,:,29)./tau_f, 'b','filled' ); ylim([0 0.028]);
+xlabel('$12\times log_2(f_1/f_{ref})$','interpreter','latex');
+ylabel('$\frac{PRT_{foot}}{T_1}$','interpreter','latex','Rotation',0);
+box on; grid on;
 
 
 %% PRTfoot vs. PRTgroove [OK]
 
 figure();
 
-scatter( 12*log2(MX(:,:,13)/440), MX(:,:,29)./MX(:,:,28), 'b', 'filled');
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(MX(:,:,29)./MX(:,:,28),1,'omitnan'), 'k', 'filled');
 ylabel('PRT_{foot}/PRT_{groove} [n.u.]');
 grid on; box on;
 ylim([0 1.3]);
 yyaxis right;
-scatter( 12*log2(MX(:,:,13)/440), 1e3*(MX(:,:,29)-MX(:,:,28)), 'color', "#D95319", 'MarkerFaceColor',"#D95319");
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(1e3*(MX(:,:,29)-MX(:,:,28)),1,'omitnan'), ...
+    'markeredgecolor', "#D95319", 'MarkerFaceColor',"#D95319");
 ylabel('PRT_{foot} - PRT_{groove} [ms]');
 ylim([-1.5 2]);
 xlabel('tessitura [semitones]');
+
+
+%% t20 differences by tessitura 
+
+%>>> tau = Vf/(c_o * S_in)
+tau = median(MX(:,:,2)./(co.*MX(:,:,5)), 1, 'omitnan');
+tau = 1;
+figure();
+errorbar(12*log2(F1MEAN/440),...
+     1e3*median(MX(:,:,34)-MX(:,:,33),1,'omitnan')./tau,...
+    1e3*std(  (MX(:,:,34)-MX(:,:,33)),1,'omitnan' ) ./ tau,...
+    'linestyle','none','color','k','marker', 'o', 'linewidth',1);
+ylabel('$t^{20}_{f}-t^{20}_{grv}$','interpreter','latex');
+xlabel('Tessitura [semitones]','interpreter','latex');
+title('t20 differences');
+box on; grid on;
+ ylim([0 2]);
+
+%% PRT ratios by tessitura 
+figure();
+errorbar( 12*log2(F1MEAN/440),...
+    median(MX(:,:,29)./MX(:,:,28),1,'omitnan') ,...
+    std( 1*(MX(:,:,29)./MX(:,:,28)),1,'omitnan' ),...
+    'linestyle','none','color','k','marker', 'o', 'linewidth',1);
+
+ylabel('$PRT_{f}/PRT_{grv}$','interpreter','latex'); 
+xlabel('Tessitura [semitones]','interpreter','latex');
+title('PRT ratios');
+grid on; box on; ylim([0 1.3]);
+
+
+
+%% PRTfoot vs Vf
+
+figure();
+errorbar( median(MX(:,:,2),1,'omitnan'),...
+    1e3*median(MX(:,:,29),1,'omitnan'),...
+    1e3*std(MX(:,:,29)),...
+    'linestyle','none','color','k','marker', 'o','linewidth',1);
+ylim([0 4]);
+xlabel('Vf'); ylabel('PRT_f [ms]');
+
 
 
 
@@ -409,7 +465,9 @@ xlabel('tessitura [semitones]');
 mask = [1:22]; %mask(7)=[]; % >>> If you want to remove a single dataset
 
 figure();
-scatter( 12*log2(MX(:,mask,13)/440), MX(:,mask,48), 'b', 'filled');
+% scatter( 12*log2(MX(:,mask,13)/440), MX(:,mask,48), 'b', 'filled');
+errorbar( 12*log2(median(MX(:,mask,13)/440,1,'omitnan')), median(MX(:,mask,48),1,'omitnan') , std(MX(:,mask,48),1,'omitnan') );
+%%
 grid on; box on;
 xlabel('semitones wrt 440');ylabel('max( a_2(t)/a_1(t) smooth) during trans. (lin) [n.u.]');
 hold on;
@@ -506,107 +564,7 @@ ylabel('$a_{2,max}/a_{1}^{targ}$ (lin)','interpreter','latex');
  ylim([0 2.2]); grid on;
 
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% ????????
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Pmouth as per massage to equations 9-10-11 and alpha_vc = 1;
-
-
-Pm =  MX(:,:,21) - (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,20) - MX(:,:,21));
-Pm =  MX(:,:,21) + (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,21) - MX(:,:,20));
-
-figure();
-
-scatter(  12*log2(MX(:,:,13)/440), log10(Pm) , 'filled'); box on; grid on;
-
-xlabel('$12\times  log_2(f_1/440)$','interpreter','latex'); box on; grid on;
-ylabel('$P_{m}$ [Pa] ($log_{10}$)','interpreter','latex');
-title('Expected mouth-rad pressure as per eqs. 9-10-11 of model and Qj=Qin, no alpha_vc');
-
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Delays (t20): foot and mouth rad
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% t20rad - t20 foot [ACOUSTIC DELAY][OK]
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), 1e3*(MX(:,:,35)-MX(:,:,34) ) , 'b', 'filled');
-ylabel('$t^{20}_{rad}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
-xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
-title('Acoustic delay','interpreter','latex');ylim([0 80])
-
-%% (t20rad-t20foot)/T1 [ACOUSTIC DELAY][OK]
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), (MX(:,:,35)-MX(:,:,34) ).*MX(:,:,13), 'b', 'filled');
-ylabel('$( t^{20}_{rad} - t^{20}_{foot} ) /T_1 $','interpreter','latex');%, 'Rotation',0);
-xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
-title('Acoustic delay','interpreter','latex');%ylim([0 ])
-
-%% t20_foot [HYDRODYNAMIC DELAY][OK]
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440),1e3*(MX(:,:,34) ), 'b', 'filled');
-ylabel('t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
-xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
-title('Hydrodynamic delay','interpreter','latex');ylim([0 10])
-
-%% t20_foot normalized by tau_f = Vf/(c_o * S_in) [HYDRODYNAMIC DELAY]
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440),( co * MX(:,:,34).*MX(:,:,5)./MX(:,:,2) ), 'b', 'filled');
-ylabel('$ t^{20}_f / \tau_f $ with $\tau_f = V_f / c_o  \mathcal{S}_{in}$','interpreter','latex');
-xlabel('$12\times log_2(f_1/440)$','interpreter','latex'); box on; grid on;
-title('Hydrodynamic delay','interpreter','latex');
-ylim([0 1.3]);
-
-%% t20_foot normalized by tau_f = Vf/(u_in * S_in) [HYDRODYNAMIC DELAY]
-
-tau_f = MX(:,:,2)./(MX(:,:,5).*sqrt( 2/rho*(MX(:,:,20)-MX(:,:,21))) );
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), MX(:,:,34)./tau_f , 'b', 'filled');
-ylabel('$ t^{20}_f / \tau_f $ with $\tau_f = V_f / u_{in}  \mathcal{S}_{in}$','interpreter','latex');
-xlabel('$12\times log_2(f_1/440)$','interpreter','latex'); box on; grid on;
-title('Hydrodynamic delay','interpreter','latex');
-ylim([0 0.2]);
-
-%% t20_foot normalized by tau_f = Vf/(u_j * S_j) [HYDRODYNAMIC DELAY][interesting...]
-
-tau_f = MX(:,:,2)./(MX(:,:,6).*sqrt( 2/rho*(MX(:,:,21)-0*MX(:,:,21))) );
-
-figure();
-scatter( 12*log2(MX(:,:,13)/440), MX(:,:,34)./tau_f , 'b', 'filled');
-xlabel('Tessitura [semitones]');
-ylabel('$ t^{20}_f / \tau_f $ with $\tau_f = V_f / u_{j}  \mathcal{S}_{j}$','interpreter','latex');
-grid on; box on;
-ylim([0 0.055]);
-
-
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PRT's 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% PRTfoot/T1 (w.r.t tessitura) [T1 for normalization??? it's hydrodynamic]
-figure();
-
-tau_f = MX(:,:,2)./(MX(:,:,5).*sqrt( 2/rho*(MX(:,:,20)-MX(:,:,21))) );
-
-% scatter(12*log2(MX(:,:,13)/440), (MX(:,:,29).*MX(:,:,13)), 'b','filled'); ylim([0 2]);
-scatter(12*log2(MX(:,:,13)/440), MX(:,:,29)./tau_f, 'b','filled' ); ylim([0 0.028]);
-xlabel('$12\times log_2(f_1/f_{ref})$','interpreter','latex');
-ylabel('$\frac{PRT_{foot}}{T_1}$','interpreter','latex','Rotation',0);
-box on; grid on;
-
-%% PRTrad/T1 (w.r.t tessitura) [OK]
-figure();
-scatter(12*log2(MX(:,:,13)/440), MX(:,:,30).*MX(:,:,13), 'b','filled' ); 
-xlabel('$12 \times log_2(f_1/f_{ref})$','interpreter','latex');
-ylabel('$\frac{PRT_{rad}}{T_1}$','interpreter','latex','Rotation',0);
-box on; grid on;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Study of Beta
@@ -832,7 +790,8 @@ set( get(gca,'XAxis'), 'FontSize', FSZ-8);
 
 MXresh = nan*ones(size(MX,1)*size(MX,2),size(MX,3));
 for idx = 1 : size(MX,3)
-   MXresh(:,idx) = reshape( MX(:,:,idx),numel(MX(:,:,idx)),1 ) ;  
+    data_notnan = MX(:,:,idx);
+   MXresh(:,idx) = reshape( data_notnan, numel(data_notnan),1 ) ;  
 end
 
 %% 
@@ -852,10 +811,10 @@ end
 DataToWorkWith = MXresh(:,maskpca);
 
 
-tmp = (tmp-mean(tmp,1,'omitnan'))./var(tmp,'omitnan');
+% tmp = (tmp-mean(tmp,1,'omitnan'))./var(tmp,'omitnan');
+tmp = (tmp-mean(tmp,1,'omitnan'))./std(tmp,'omitnan');
 
-tmp = exp(tmp);
-
+% tmp = exp(tmp);
 
 
 tmpc = corrcoef(tmp);
@@ -880,8 +839,6 @@ colorbar;
 % PCA()
 % #################################################################### 
 
-% maskpca = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39];
-% maskpca = [2,3,5,6,7,26,38];
 
 
 DataToWorkWith = MXresh(:,maskpca);
@@ -898,100 +855,6 @@ LBL = append(namevarsall(maskpca));
 
 figure(4);clf;
 biplot(coeff(:,1:3),'scores',score(:,1:3),'VarLabels',LBL);
-
-%% 
-% #################################################################### 
-% BETA and NU with FREQUENCY
-% #################################################################### 
-
-figure(25); clf;
-FSZ = 15;
-scatter( freqlogax, log10(MX(:,:,26)), 'b', 'filled');box on;
-ylabel('$\beta$','interpreter','latex','fontsize',FSZ);title('Transient');
-hold on;
-yyaxis right;
-scatter( freqlogax, log10(MX(:,:,27)), 'r', 'filled');box on;
-% ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-legend('$\beta$','$\nu$','interpreter','latex','fontsize',FSZ);
-yyaxis right;
-
-ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-xlabel('$12log_2(f_1 / f_{ref})$','interpreter','latex','fontsize',FSZ);
-
-%% 
-% #################################################################### 
-% BETA and NU with FREQUENCY
-% #################################################################### 
-
-figure(25); clf;
-FSZ = 15;
-scatter( freqlogax, log10(MX(:,:,26)), 'b', 'filled');box on;
-ylabel('$\beta$','interpreter','latex','fontsize',FSZ);title('Transient');
-hold on;
-yyaxis right;
-scatter( freqlogax, log10(MX(:,:,27)), 'r', 'filled');box on;
-% ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-legend('$\beta$','$\nu$','interpreter','latex','fontsize',FSZ);
-yyaxis right;
-
-ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-xlabel('$12log_2(f_1 / f_{ref})$','interpreter','latex','fontsize',FSZ);
-
-%% 
-
-% #################################################################### 
-% BETA and NU with I21 and I31
-% #################################################################### 
-figure(); clf;
-FSZ = 15;
-scatter( log10(MX(:,:,38)), log10(MX(:,:,26)), 'b', 'filled');box on;
-ylabel('$\beta$','interpreter','latex','fontsize',FSZ);title('Transient');
-xlabel('I21');
-
-figure();
-scatter( log10(MX(:,:,38)), log10(MX(:,:,27)), 'r', 'filled');box on;
-ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-xlabel('I21');
-
-%% 
-% #################################################################### 
-% BETA and NU with PTARG GROOVE
-% #################################################################### 
-
-
-figure(27); clf;
-FSZ = 15;
-scatter( log10(MX(:,:,20)), log10(MX(:,:,26)), 'b', 'filled');box on;
-ylabel('$\beta$','interpreter','latex','fontsize',FSZ);title('Transient');
-hold on;
-yyaxis right;
-scatter( log10(MX(:,:,20)), log10(MX(:,:,27)), 'r', 'filled');box on;
-% ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-% legend('$\beta$','$\nu$','interpreter','latex','fontsize',FSZ);
-yyaxis right;
-ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-xlabel('$log10 PTARG groove$','interpreter','latex','fontsize',FSZ);
-
-
-
-%% 
-% #################################################################### 
-% BETA and NU with PTARG FOOT
-% #################################################################### 
-
-
-figure(28); clf;
-FSZ = 15;
-scatter( log10(MX(:,:,21)), log10(MX(:,:,26)), 'b', 'filled');box on;
-ylabel('$\beta$','interpreter','latex','fontsize',FSZ);title('Transient');
-hold on;
-yyaxis right;
-scatter( log10(MX(:,:,21)), log10(MX(:,:,27)), 'r', 'filled');box on;
-% ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-% legend('$\beta$','$\nu$','interpreter','latex','fontsize',FSZ);
-yyaxis right;
-ylabel('$\nu$','interpreter','latex','fontsize',FSZ);
-xlabel('$log10 PTARG foot$','interpreter','latex','fontsize',FSZ);
 
 
 %% 
@@ -1022,27 +885,6 @@ plot(polyval(p,linidx),'--r');
 xlabel('Num pipe','interpreter','latex','fontsize',FSZ);
 
 
-%% 
-
-% #################################################################### 
-% VENA CONTRACTA palletbox-groove-foot
-% #################################################################### 
-
-
-PALLAREA = repmat(PALLAREA(maskpipes)',max(size(MXgr)),1);
-
-rat1 = MX(:,:,5)./PALLAREA .*sqrt( (MXgr-MXft) ./ (MXpal-MXgr) );
-
-figure();
-RatioToPlot = 1./rat1;
-linidx = 1:min(size(RatioToPlot));
-scatter(linidx, RatioToPlot, 'b','filled');%ylim([0 1]);
-title('Vena contracta ratios: $VC_{inlet}/VC_{groove-slot}$','interpreter','latex','fontsize',FSZ);
-p = polyfit(linidx, mean(RatioToPlot,1,'omitnan'),1);
-hold on;
-plot(polyval(p,linidx),'--r');
-xlabel('Num pipe','interpreter','latex','fontsize',FSZ);
-
 
 
 
@@ -1050,60 +892,18 @@ xlabel('Num pipe','interpreter','latex','fontsize',FSZ);
 % Geometry
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 FSZ = 17;
-figure();
+figure(); hold on;
+
+for idx = 1 :12
+    tmp_data = log10( median(MX(:,:,idx)) );
+    val_absc = interp1(freqlogax, tmp_data, 0);
+    plot(freqlogax, tmp_data-val_absc ,'-') ;
+    
+end
+grid on; box on;
 
 
-geoh(1) = subplot(3,4,1);
-scatter( freqlogax, log10(MX(:,:,1)), 'b', 'filled');box on;
-ylabel('$Lp$','interpreter','latex','fontsize',FSZ);
 
-geoh(2) = subplot(3,4,2);
-scatter( freqlogax, log10(MX(:,:,2)), 'b', 'filled');box on;
-ylabel('$Vf$','interpreter','latex','fontsize',FSZ);
-
-geoh(3) = subplot(3,4,3);
-scatter( freqlogax, log10(MX(:,:,3)), 'b', 'filled');box on;
-ylabel('$PWdth$','interpreter','latex','fontsize',FSZ);
-
-geoh(4) = subplot(3,4,4);
-scatter( freqlogax, log10(MX(:,:,4)), 'b', 'filled');box on;
-ylabel('$TnHD$','interpreter','latex','fontsize',FSZ);
-
-geoh(5) = subplot(3,4,5);
-scatter( freqlogax, log10(MX(:,:,5)), 'b', 'filled');box on;
-ylabel('$Sin$','interpreter','latex','fontsize',FSZ);
-
-geoh(6) = subplot(3,4,6);
-scatter( freqlogax, log10(MX(:,:,6)), 'b', 'filled');box on;
-ylabel('$Sjet$','interpreter','latex','fontsize',FSZ);
-
-geoh(7) = subplot(3,4,7);
-scatter( freqlogax, log10(MX(:,:,7)), 'b', 'filled');box on;
-ylabel('$h$','interpreter','latex','fontsize',FSZ);
-
-geoh(8) = subplot(3,4,8);
-scatter( freqlogax, log10(MX(:,:,8)), 'b', 'filled');box on;
-ylabel('$H$','interpreter','latex','fontsize',FSZ);
-
-geoh(9) = subplot(3,4,9);
-scatter( freqlogax, log10(MX(:,:,9)), 'b', 'filled');box on;
-ylabel('$Wm$','interpreter','latex','fontsize',FSZ);
-
-geoh(10) = subplot(3,4,10);
-scatter( freqlogax, log10(MX(:,:,10)), 'b', 'filled');box on;
-ylabel('$Dp$','interpreter','latex','fontsize',FSZ);
-
-% geoh(11) = subplot(3,4,11);
-% scatter( freqlogax,log10( MX(:,:,11)), 'b', 'filled');box on;
-% ylabel('$Vgrv$','interpreter','latex','fontsize',FSZ);
-
-geoh(12) = subplot(3,4,12);
-scatter( freqlogax, log10(MX(:,:,12)), 'b', 'filled');box on;
-ylabel('$Qfact1$','interpreter','latex','fontsize',FSZ);
-
-
-xlabel('$12log_2(f_1 / f_{ref})$','interpreter','latex','fontsize',FSZ);
-linkaxes(geoh,'x');    
 
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

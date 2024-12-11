@@ -5,11 +5,11 @@ clc; clear;
 fs = 51.2e3;
 dt = 1/fs;
     videoObj = VideoWriter('output_video.avi'); 
-    videoObj.FrameRate = 12; 
+    videoObj.FrameRate = 2; 
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 5 :  length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 1 :  length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
 % close all;
@@ -84,7 +84,7 @@ AvTimeDur     = 0.500; %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fighand = figure(20);clf; 
-axhand = axes(fighand); cla;
+axhand = axes(fighand); cla;        
 
 for idx = 1 : length(lk_foot)
         
@@ -142,7 +142,7 @@ for idx = 1 : length(lk_foot)
             plot([1,length(tmp_gr)],[1,1]*Pgroove_targ(idx)*0.8,'--k');
             plot([1,length(tmp_gr)],[1,1]*Pgroove_targ(idx)*0.2,'--k');
             pause();
-        end                        
+        end       
         
 
         % FOOT  /!\  ~~~~~~~~~~~~~~~~~
@@ -228,7 +228,7 @@ for idx = 1 : length(lk_foot)
         TN = fix(T1estim*fs);
 
         
-
+        try % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % FOURIER DECOMPOSITION of Prad
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -290,10 +290,33 @@ for idx = 1 : length(lk_foot)
         ratio_dats = dat2./dat1;
 
         max_a2_over_a1(idx) = max(ratio_dats(  t20idxp :  t80idxp+fix(50*PRTfoot(idx)*fs)   ));
-
+        end % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %        VISUALIZATIONS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+        % Plot fit with data.
+        if idx==1
+
+            ttt = [0:length(tmp_gr)-1]*dt - 0.095;
+            plot(axhand, ttt, tmp_gr/Pgroove_targ(idx), 'LineWidth',2.0);
+            hold on;
+            plot(axhand, ttt, tmp_ft/Pfoot_targ(idx), 'LineWidth',2.0 );
+            xlim([0 0.050]);
+            grid on; box on;
+
+            legend('Groove', 'Foot', 'Location', 'NorthWest', 'Interpreter', 'none','FontSize',20 );
+            xlabel( 'Time [s]', 'Interpreter', 'none' );
+            ylabel( 'Pressure scaled by respective target [n.u.]', 'Interpreter', 'none' );
+            
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none');        
+            hold off;
+            drawnow;
+            frame = getframe(gcf);
+            writeVideo(videoObj, frame);
+            % pause(0.5);
+        end
 
         if 0
             %%% PHASE-SPACE TRANSIENT Pgroove-Pfoot
@@ -318,7 +341,7 @@ for idx = 1 : length(lk_foot)
             writeVideo(videoObj, frame);
         end
 
-        if 1
+        if 0
             N1period = fix(fs/f1estim);
             HA       = fix(0.2*N1period);
             sliding_mask = [ 1 : 10*N1period] + 0*HA;
@@ -433,12 +456,13 @@ opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
 % ALIGN AND GROUP-PLOT  ===========================
 PRECUT = fix(0.020*fs); % (Def. 0.015 s) Shift Data away from time zero
 fprintf("Starting beta nu fits...");
-fighand = figure(20);clf; 
-axhand = axes(fighand); cla;
+% fighand = figure(20);clf; 
+% axhand = axes(fighand); cla;
+
 
 NumPRTs = 1; %length of data after t80foot for the fit
 
-if 0 % for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<<<<<<<<<<<<<<<<<
+if 0 % for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     Ptar = Pfoot_targ(jdx);
     
@@ -456,7 +480,6 @@ if 0 % for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current fi
     yData = foot_trans{jdx}(init_idx : end_idx);
     xData = [0:length(yData)-1]*dt;
     [FitRes{jdx}, gof{jdx}] = fit( xData', yData', ft, opts );
-
 
     % Plot fit with data.
     if 0
