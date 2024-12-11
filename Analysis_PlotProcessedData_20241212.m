@@ -35,6 +35,11 @@ addpath('./processed/');
 % [50] Lateral stroke area of pallet valve at max opening (smaller than Slot Area = PWidth*Length_win_slot =MX(:,:,3)*0.129;
 
 
+% [51]:             [52]:       [53]:
+
+
+
+
 rho = 1.2;
 co  = 340;
 
@@ -275,7 +280,7 @@ title('Expected mouth-rad pressure as per eqs. 9-10-11 of model and Qj=Qin, no a
 %% t20grv - t20 foot [ACOUSTIC DELAY][OK] 06/12/2024[[[[[[06/12/2024 [to keep]]]]]]]
 
 figure();
-scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(1e3*abs(MX(:,:,33)-MX(:,:,34) ),1,'omitnan') , 'b', 'filled');
+scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(1e3*abs(MX(:,:,33)-MX(:,:,34) ),1,'omitnan') , 'dk', 'filled');
 ylabel('$t^{20}_{grv}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
 xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 
@@ -296,18 +301,25 @@ box on; grid on;
 
 figure();
 scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), ...
-    median(   MX(:,:,33)+MX(:,:,28)-MX(:,:,29)-MX(:,:,34) ,1,'omitnan') ,...
-    'b', 'filled');
+    1e3*median(   MX(:,:,29)+MX(:,:,34)-MX(:,:,28)-MX(:,:,33) ,1,'omitnan') ,...
+    'dk', 'filled');
 
-ylabel('$t^{20}_{grv}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
+ylabel('$t^{80}_{ft}$ - t$^{80}_{grv}$  [ms]','interpreter','latex');
 xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+ylim([0 2.4]);
+grid on; box on;
 
 %% t80grv - t80 foot [ACOUSTIC DELAY][OK] 06/12/2024 [to keep][[[[[[06/12/2024 [to keep]]]]]]]
 
 figure();
 scatter( median( MX(:,:,2)./MX(:,:,11),1,'omitnan'), ...
-    median(  1e3* abs(MX(:,:,33)+MX(:,:,28)-MX(:,:,29)-MX(:,:,34)) ,1,'omitnan') ,...
-    'b', 'filled');
+    median(  1e3* abs(MX(:,:,29)+MX(:,:,34)-MX(:,:,28)-MX(:,:,33)) ,1,'omitnan') ,...
+    'dk', 'filled');
+
+xlabel('$V_f/V_{grv}$','Interpreter','latex');
+ylabel('$t^{80}_f-t^{80}_{grv}$','interpreter','latex');
+grid on; box on;
+ylim([0 2.4]);
 
 %% t20_foot normalized by tau_f = Vf/(c_o * S_in) [HYDRODYNAMIC DELAY]
 
