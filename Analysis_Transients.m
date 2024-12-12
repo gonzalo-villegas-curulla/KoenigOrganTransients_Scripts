@@ -9,10 +9,10 @@ dt = 1/fs;
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 21 :  length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 1 :  length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
-% close all;
+
 tinit = tic();
 fs    = 51.2e3;
 dt    = 1/fs;
@@ -88,17 +88,11 @@ max_a2_over_a1      = zeros(NT,1);
 lk_foot     = KeyDownIdx;
 lk_foot_end = lk_foot' + fix(fs*DurNotesInS);
 
-    if 0 % PLOT signals and onsets???
-        plotquick; hold on; plot(lk_foot,zeros(length(lk_foot)),'ob');
-        plot(lk_foot_end, zeros(length(lk_foot_end)),'*r');
-    end
-
 
 % A prediction of transient length to allocate
-LENretro = fix(0.100*fs); 
-LENpost  = fix(2.2*fs + 0*0.600*fs);  % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PUT IT BACK TO 0.600f*s
-
-AvTimeDur     = 0.500; % 
+LENretro = fix(0.100*fs); % walk back from key onset
+LENpost  = fix(2.2*fs + 0*0.600*fs); % Walk forward from key onset % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PUT IT BACK TO 0.600f*s
+AvTimeDur  = 0.500; % Transient duration plus headroom
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Segment and loop over all transients of current file
@@ -134,7 +128,7 @@ for idx = 1 : length(lk_foot)
         
         
         carefulmask = lk_foot(idx) : lk_foot(idx)+fix(3*fs);
-        ll = fix(length(carefulmask)*0.5): fix(length(carefulmask)*0.75);
+        ll = fix(length(carefulmask)*0.5): fix(length(carefulmask)*0.75); % Scan only through 50-75% of signal's length (ca. 750ms)
         carefulmask = carefulmask( ll );
         
         
@@ -190,7 +184,7 @@ for idx = 1 : length(lk_foot)
 
 
         
-                % RADIATED SOUND/PIPE/MOUTH  /!\  ~~~~~~~~~~~~~~~~~
+        % RADIATED SOUND/PIPE/MOUTH  /!\  ~~~~~~~~~~~~~~~~~
         
         tmp_wholepipe    = x(5, mask_pipe);
         tmp_wholepipe    = tmp_wholepipe - mean(tmp_wholepipe);
@@ -284,25 +278,19 @@ for idx = 1 : length(lk_foot)
         
 
         Ppipe_targ(idx) = TOTAL_target_amp; % Mouth radiated target pressure
-        t20idxp         = find( enveltot/Ppipe_targ(idx)<0.2,1,'last');
-        t80idxp         = find( enveltot/Ppipe_targ(idx)>0.8,1,'first');
+        PPTI = TOTAL_target_amp;
+        t20idxp         = find( enveltot/PPTI<0.2,1,'last');
+        t80idxp         = find( enveltot/PPTI>0.8,1,'first');
 
         % t20mouth(idx)   = dt*(t20idxp-LENretro -lk_foot(idx));
-        t20mouth(idx) = dt*(t20idxp-LENretro );
-        PRT20pipe(idx)  = dt*(t80idxp-t20idxp);  
+        t20mouth(idx)  = dt*(t20idxp-LENretro );
+        PRT20pipe(idx) = dt*(t80idxp-t20idxp);  
 
+        t10mouth(idx)   = dt*( find(enveltot/PPTI<0.1,1,'last') - LENretro );
+        t5mouth(idx)    = dt*( find(enveltot/PPTI<0.05, 1, 'last') - LENretro );
 
-
-
-
-
-
-
-
-
-
-        
-
+        PRT10pipe(idx) = dt*( find(enveltot/PPTI>0.9,1,'first') - find(enveltot/PPTI<0.1,1,'last') );
+        PRT5pipe(idx)  = dt*( find(enveltot/PPTI>0.95,1,'first') - find(enveltot/PPTI<0.05,1,'last') );
         
         % Normalize by their steady-state values
         Fund     = envel_first/mean(envel_first(mask3));
@@ -344,31 +332,62 @@ for idx = 1 : length(lk_foot)
         %        VISUALIZATIONS
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        plot(axhand, [0:length(tmp_gr)-1]*dt, tmp_gr/Pgroove_targ(idx) );
-        hold on;
-        plot(axhand, [0:length(tmp_ft)-1]*dt, tmp_ft/Pfoot_targ(idx) );
+        if 1
+            plot(axhand, [0:length(enveltot)-1]*dt, pipecurr(1:hL)/PPTI);
+            hold on;
+            plot(axhand, [0:length(enveltot)-1]*dt, enveltot/PPTI);
+            plot(axhand, [0.,0.5],0.05*[1.,1.],'--k');
+            plot(axhand, [0.,0.5],0.10*[1.,1.],'--k');
+            plot(axhand, [0.,0.5],0.20*[1.,1.],'--k');
+            plot(axhand, [0.,0.5],0.80*[1.,1.],'--k');
+            plot(axhand, [0.,0.5],0.90*[1.,1.],'--k');
+            plot(axhand, [0.,0.5],0.95*[1.,1.],'--k');
+    
+            plot(axhand, (t20mouth(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
+            plot(axhand, (t10mouth(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
+            plot(axhand, (t5mouth(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
 
-        plot(axhand, [0,0.5],0.2*[1,1],'--k');
-        plot(axhand, [0,0.5],0.1*[1,1],'--k');
-        plot(axhand, [0,0.5],0.05*[1,1],'--k');
-
-        plot(axhand, [0,0.5],0.8*[1,1],'--k');
-        plot(axhand, [0,0.5],0.9*[1,1],'--k');
-        plot(axhand, [0,0.5],0.95*[1,1],'--k');
-
-        xlim([0 0.5]); ylim([-0.2 1.4]);
-
-        hold off;
-        box on; grid on;
+            plot(axhand, (t20mouth(idx)+PRT20pipe(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
+            plot(axhand, (t10mouth(idx)+PRT10pipe(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
+            plot(axhand, (t5mouth(idx)+PRT5pipe(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
 
 
-        title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none'); 
-        xlabel( 'Time [s]', 'Interpreter', 'none' );
-        ylabel( 'Pressure scaled by respective target [n.u.]', 'Interpreter', 'none' );
-        legend('Pgrv','Pft','location','NorthWest','interpreter','none');
-        drawnow;
-        frame = getframe(gcf);
-        writeVideo(videoObj, frame);
+            hold off;
+            ylim([-0.2 1.4]); grid on; box on;
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none'); 
+            xlim([0 0.750]);
+            drawnow;
+            frame = getframe(gcf);
+            writeVideo(videoObj, frame);
+        end
+
+        if 0
+            plot(axhand, [0:length(tmp_gr)-1]*dt, tmp_gr/Pgroove_targ(idx) );
+            hold on;
+            plot(axhand, [0:length(tmp_ft)-1]*dt, tmp_ft/Pfoot_targ(idx) );
+    
+            plot(axhand, [0,0.5],0.2*[1,1],'--k');
+            plot(axhand, [0,0.5],0.1*[1,1],'--k');
+            plot(axhand, [0,0.5],0.05*[1,1],'--k');
+    
+            plot(axhand, [0,0.5],0.8*[1,1],'--k');
+            plot(axhand, [0,0.5],0.9*[1,1],'--k');
+            plot(axhand, [0,0.5],0.95*[1,1],'--k');
+    
+            xlim([0 0.300]); ylim([-0.2 1.4]);
+    
+            hold off;
+            box on; grid on;
+    
+    
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none'); 
+            xlabel( 'Time [s]', 'Interpreter', 'none' );
+            ylabel( 'Pressure scaled by respective target [n.u.]', 'Interpreter', 'none' );
+            legend('Pgrv','Pft','location','NorthWest','interpreter','none');
+            drawnow;
+            frame = getframe(gcf);
+            writeVideo(videoObj, frame);
+        end
 
 
         if 0
@@ -577,11 +596,6 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<
         % pause(0.5);
     end
 
-    
-    if 0 
-    fprintf('Pfoot_targ %1.1f, Beta %1.1f, Nu %1.5f\n',FitRes{jdx}.a,FitRes{jdx}.b,FitRes{jdx}.d);
-    end
-
     % Store fit data
     afit(jdx)  = FitRes{jdx}.a; % notPtarg
     bfit(jdx)  = FitRes{jdx}.b; % beta
@@ -616,9 +630,9 @@ if 1
         'PRT20groove','PRT20foot','PRT20pipe',...
         't10groove','PRT10groove','t5groove','PRT5groove',...
         't10foot','PRT10foot','t5foot','PRT5foot',...
+        't10mouth','t5mouth','PRT10pipe','PRT5pipe',...
         'KeyMovingTime','gofr2','A2max_over_A1simult','A2max_over_A1target',...
         'A2max_over_A2target','pf_at_a2max','pm_at_a2max','a2max_vec','max_a2_over_a1');    
-
     
     fprintf('Ellapsed time with this file: %1.2f \n', toc(tinit));
 end

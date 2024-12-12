@@ -21,8 +21,8 @@ addpath('./processed/');
 
 % [26]:beta                 [27]:nu   
 
-% [28]:PRTgrv               [29]:PRTfoot              [30]:PRTrad
-% [31]:PRTfoot/grv          [32]:PRTrad/foot  
+% [28]:PRT20grv               [29]:PRT20foot              [30]:PRT20pipe
+% [31]:PRT20foot/grv          [32]:PRT20rad/foot  
 % [33]:t20 groove           [34]:t20 foot             [35]:t20 rad
 % [36]:t20 foot-groove      [37]:t20 rad-foot
 % [38]:Area1                [39]:Area2
@@ -35,9 +35,8 @@ addpath('./processed/');
 % [50] Lateral stroke area of pallet valve at max opening (smaller than Slot Area = PWidth*Length_win_slot =MX(:,:,3)*0.129;
 
 
-% [51]:             [52]:       [53]:
-
-
+% [51]: t10groove [52]: PRT10groove [53]:t5groove  [54]:PRT5groove
+% [55]: t10foot   [56]: PRT10foot   [57]: t5foot   [58]: PRT5foot
 
 
 rho = 1.2;
@@ -250,14 +249,11 @@ plot(fitres, xData, yData); ylim([0 1]); grid on;xlim([0 1.5]);
 
 %% ????? Pmouth as per massage to equations 9-10-11 and alpha_vc = 1;
 
-
 Pm =  MX(:,:,21) - (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,20) - MX(:,:,21));
 Pm =  MX(:,:,21) + (MX(:,:,5)./MX(:,:,6)).^2.*(MX(:,:,21) - MX(:,:,20));
 
 figure();
-
 scatter(  12*log2(MX(:,:,13)/440), log10(Pm) , 'filled'); box on; grid on;
-
 xlabel('$12\times  log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 ylabel('$P_{m}$ [Pa] ($log_{10}$)','interpreter','latex');
 title('Expected mouth-rad pressure as per eqs. 9-10-11 of model and Qj=Qin, no alpha_vc');
@@ -272,32 +268,29 @@ title('Expected mouth-rad pressure as per eqs. 9-10-11 of model and Qj=Qin, no a
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Groove 2 Foot analysis
+% Groove and Foot analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
-%% t20grv - t20 foot [ACOUSTIC DELAY][OK] 06/12/2024[[[[[[06/12/2024 [to keep]]]]]]]
+%% t20grv - t20foot, by tessitura;  06/12/2024[[[[[[06/12/2024 [to keep]]]]]]]
 
 figure();
 scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(1e3*abs(MX(:,:,33)-MX(:,:,34) ),1,'omitnan') , 'dk', 'filled');
 ylabel('$t^{20}_{grv}$ - t$^{20}_{foot}$ (lin)[ms]','interpreter','latex');
-xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); 
+box on; grid on; ylim([0 2]);
 
-ylim([0 2]);
-
-%% PRTf and PRTgrv overlaid
+%% PRT20ft and PRT20grv, by tessitura;
 figure();
-scatter( 12*log2(F1MEAN/440),...
-    1e3*median(MX(:,:,28),1,'omitnan') , 'xk');
+scatter( 12*log2(F1MEAN/440), 1e3*median(MX(:,:,28),1,'omitnan') , 'xk');
 hold on;
-scatter( 12*log2(F1MEAN/440),...
-    1e3*median(MX(:,:,29),1,'omitnan') , 'ok');
-legend('PRT grv','PRT f');ylim([0 4]);
+scatter( 12*log2(F1MEAN/440), 1e3*median(MX(:,:,29),1,'omitnan') , 'ok');
+legend('PRT^{20-80}_{grv}','PRT^{20-80}_f');ylim([0 4]);
 box on; grid on;
 
 
-%% t80grv - t80 foot [ACOUSTIC DELAY][OK] [[[[[[06/12/2024 [to keep]]]]]]]
+%% t80grv - t80 foot, by tessitura; [[[[[[06/12/2024 [to keep]]]]]]]
 
 figure();
 scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), ...
@@ -309,7 +302,7 @@ xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 ylim([0 2.4]);
 grid on; box on;
 
-%% t80grv - t80 foot [ACOUSTIC DELAY][OK] 06/12/2024 [to keep][[[[[[06/12/2024 [to keep]]]]]]]
+%% t80grv - t80foot, by Volume Ratios;  [[[[[[06/12/2024 [to keep]]]]]]]
 
 figure();
 scatter( median( MX(:,:,2)./MX(:,:,11),1,'omitnan'), ...
@@ -319,7 +312,47 @@ scatter( median( MX(:,:,2)./MX(:,:,11),1,'omitnan'), ...
 xlabel('$V_f/V_{grv}$','Interpreter','latex');
 ylabel('$t^{80}_f-t^{80}_{grv}$','interpreter','latex');
 grid on; box on;
-ylim([0 2.4]);
+ylim([0 2.5]);
+
+%% t10grv - t10foot, by tessitura;
+figure();
+plot( 12*log2(F1MEAN/440), 1e3*median(MX(:,:,55)-MX(:,:,51),1,'omitnan') , 'dk','markerfacecolor','k');
+grid on; box on;
+xlabel('$12\times log_2 (f_1/440 Hz)$','interpreter','latex');
+ylabel('$t^{10}_f - t^{10}_{grv}$ [ms]','interpreter','latex');
+ylim([0 2.5]);
+
+%% PRT10ft and PRT10grv, by tessitura
+figure();
+scatter(12*log2(F1MEAN/440), 1e3*median(MX(:,:,52),1,'omitnan'), 'kd','filled');
+hold on;
+scatter(12*log2(F1MEAN/440), 1e3*median(MX(:,:,56),1,'omitnan'), 'ks');
+legend('$PRT^{10-90}_{grv}$','$PRT^{10-90}_{ft}$','interpreter','latex','location','NorthEast');
+xlabel('$12\times log_2(f_1/440 Hz)$', 'interpreter','latex');
+ylabel('[ms]','interpreter','latex');
+grid on; box on;
+ylim([0 8]);
+
+
+%% t90ft-t90grv by tessitura
+figure();
+scatter(  12*log2(F1MEAN/440), 1e3*median(MX(:,:,55)+MX(:,:,56) - MX(:,:,51)-MX(:,:,52),1,'omitnan'), 'kd','filled');
+grid on; box on;
+xlabel('$12\times log_2(f_1/440 Hz)$','interpreter','latex');
+ylabel('$t^{10-90}_{ft}-t^{10-90}_{grv}$ [ms]','interpreter','latex');
+
+
+%% t90ft-t90grv by Volume ratios
+figure();
+scatter(  median(MX(:,:,2)./MX(:,:,11),1,'omitnan'), 1e3*median(MX(:,:,55)+MX(:,:,56) - MX(:,:,51)-MX(:,:,52), 1, 'omitnan'), 'kd','filled' );
+grid on; box on;
+
+xlabel('$V_f/V_{grv}$','interpreter','latex');
+ylabel('$t^{10-90}_{ft} - t^{10-90}_{grv}$ [ms]','interpreter','latex');
+
+
+
+
 
 %% t20_foot normalized by tau_f = Vf/(c_o * S_in) [HYDRODYNAMIC DELAY]
 
@@ -341,7 +374,7 @@ xlabel('$12\times log_2(f_1/440)$','interpreter','latex'); box on; grid on;
 title('Hydrodynamic delay','interpreter','latex');
 ylim([0 0.2]);
 
-%% t20_foot normalized by tau_f = Vf/(u_j * S_j) [HYDRODYNAMIC DELAY][interesting...]
+%% t20_foot normalized by tau_f = Vf/(u_j * S_j) [HYDRODYNAMIC DELAY]
 
 tau_f = MX(:,:,2)./(MX(:,:,6).*sqrt( 2/rho*(MX(:,:,21)-0*MX(:,:,21))) );
 
@@ -356,7 +389,7 @@ ylim([0 0.055]);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Acoustic
+% Acoustic analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% t20rad - t20 foot [ACOUSTIC DELAY][OK]

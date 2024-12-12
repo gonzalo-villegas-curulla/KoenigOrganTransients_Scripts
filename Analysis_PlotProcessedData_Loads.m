@@ -108,7 +108,7 @@ QFAC1     = part1.*part2;
 % Allocate memory
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-MX            = nan*ones(NumTransMax, length(files), 50);
+MX            = nan*ones(NumTransMax, length(files), 58);
 vecmeanfreqs  = zeros(length(files),1);
 PRTMX         = nan*ones(NumTransMax, length(files), 3);
 PRTpipeMedian = zeros(length(files),1);
@@ -164,7 +164,7 @@ for idx = 1 : length(files)
     MX(:, idx, 11)   = oneVGROOVE*ones(NumTransMax,1);
     MX(:, idx, 12)   = oneQFAC1*ones(NumTransMax,1);
 
-    MX(:, idx, 50) = onePalletValveStrokeArea*ones(NumTransMax,1);
+    MX(:, idx, 50)   = onePalletValveStrokeArea*ones(NumTransMax,1);
     
     
     
@@ -203,18 +203,18 @@ for idx = 1 : length(files)
     %%%%%%%%%% TRANSIENT ASPECTS %%%%%%%%%% 
     
     t20foot=t20foot(:);t20groove=t20groove(:);t20mouth=t20mouth(:);
-    PRTgroove = PRTgroove(:);PRTfoot=PRTfoot(:);PRTpipe=PRTpipe(:);
+    PRT20groove = PRT20groove(:);PRT20foot=PRT20foot(:);PRT20pipe=PRT20pipe(:);
     
     MX(find(betafit)  , idx, 26)  = betafit(:); % Foot pressure transient slope
     MX(find(nufit)    , idx, 27)  = nufit(:);   % Foot pressure transient onset sharpness
     
     
-    MX(find(PRTgroove), idx,28) = PRTgroove;
-    MX(find(PRTfoot)  ,idx,29)  = PRTfoot;
-    MX(find(PRTpipe)  ,idx,30)  = PRTpipe;
+    MX(find(PRT20groove), idx,28) = PRT20groove;
+    MX(find(PRT20foot)  ,idx,29)  = PRT20foot;
+    MX(find(PRT20pipe)  ,idx,30)  = PRT20pipe;
     
-    MX(find(PRTfoot)     ,idx, 31) = PRTfoot./PRTgroove;
-    MX(find(PRTpipe)     ,idx, 32) = PRTpipe./PRTfoot;
+    MX(find(PRT20foot)     ,idx, 31) = PRT20foot./PRT20groove;
+    MX(find(PRT20pipe)     ,idx, 32) = PRT20pipe./PRT20foot;
     
     MX(find(t20groove), idx, 33) = t20groove(t20groove~=0);
     MX(find(t20foot),   idx, 34) = t20foot(t20foot~=0);
@@ -232,21 +232,27 @@ for idx = 1 : length(files)
     
     MX( : , idx, 42)            = KeyVel(:,idx);
 
-    MX(find(A2max_over_A1simult),idx,43)       = A2max_over_A1simult;
-    MX(find(A2max_over_A1target),idx,44)       = A2max_over_A1target;
-    MX(find(A2max_over_A2target),idx,45)       = A2max_over_A2target;
-    MX(find(pf_at_a2max - pm_at_a2max),idx,46) = pf_at_a2max - 0+0*pm_at_a2max; % DeltaP (foot-mouth) /!\ Decide whether you keep the Pm'
-    MX(find(a2max_vec),idx,47)                 = a2max_vec;
-    MX(find(max_a2_over_a1), idx, 48)          = max_a2_over_a1;
+    MX(find(A2max_over_A1simult) ,idx,43)      = A2max_over_A1simult(find(A2max_over_A1simult));
+    MX(find(A2max_over_A1target),idx,44)       = A2max_over_A1target(find(A2max_over_A1target));
+    MX(find(A2max_over_A2target),idx,45)       = A2max_over_A2target(find(A2max_over_A2target));
+    MX(find(pf_at_a2max),idx,46) = pf_at_a2max(find(pf_at_a2max)) - 0;%+0*pm_at_a2max; % DeltaP (foot-mouth) /!\ Decide whether you keep the Pm'
+    MX(find(a2max_vec),idx,47)                 = a2max_vec(find(a2max_vec));
+    MX(find(max_a2_over_a1), idx, 48)          = max_a2_over_a1(find(max_a2_over_a1));
     MX(find(gofr2), idx, 49)                   = gofr2;
-    
 
-    
-    
-    
+
+    MX(find(t10groove),  idx,51)  = t10groove;
+    MX(find(PRT10groove),idx,52)  = PRT10groove;
+    MX(find(t5groove),   idx,53)  = t5groove;
+    MX(find(PRT5groove), idx,54)  = PRT5groove;
+
+    MX(find(t10foot),    idx,55)  = t10foot;
+    MX(find(PRT10foot),  idx,56)  = PRT10foot;
+    MX(find(t5foot),     idx,57)  = t5foot;
+    MX(find(PRT5foot),   idx,58)  = PRT5foot;
    
     %%%%%%%%%% MARGINAL ASPECTS %%%%%%%%%% 
-    PRTpipeMedian(idx) = median(PRTpipe(PRTpipe~=0),'omitnan');
+    PRTpipeMedian(idx) = median(PRT20pipe(PRT20pipe~=0),'omitnan');
     vecmeanfreqs(idx)  = mean(f1);
     freqref            = 440;
     freqlogax          = 12*log2(vecmeanfreqs/freqref);
