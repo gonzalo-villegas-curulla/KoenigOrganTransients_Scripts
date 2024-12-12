@@ -351,11 +351,11 @@ for idx = 1 : length(lk_foot)
             plot(axhand, (t10mouth(idx)+PRT10pipe(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
             plot(axhand, (t5mouth(idx)+PRT5pipe(idx)+dt*LENretro)*[1,1],[0.,1.],'--k');
 
-
+            xlabel('Time [s]');
             hold off;
             ylim([-0.2 1.4]); grid on; box on;
             title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none'); 
-            xlim([0 0.750]);
+            xlim([0 0.400]);
             drawnow;
             frame = getframe(gcf);
             writeVideo(videoObj, frame);

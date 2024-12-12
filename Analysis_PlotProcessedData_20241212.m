@@ -48,6 +48,48 @@ co  = 340;
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% All geometry vars w.r.t. f1/440
+FSZ = 17;
+figure(); hold on;
+
+for idx = 1 :12
+    tmp_data = log10( median(MX(:,:,idx)) );
+    val_absc = interp1(freqlogax, tmp_data, 0);
+    plot(freqlogax, tmp_data-val_absc ,'-') ;
+    
+end
+grid on; box on;
+
+
+
+namevarsall = {'Lp','Vf','PWdth','TNHD','INLET','SJET','h','H','Wm','Dp',...
+    'Vgrv','Qfact','f1','theta','Qpall2grv','Qgr2ft','Qjet','Rmplssg',...
+    'P{o} pall','P{o}grv','P{o}foot','P{o}rad',...
+    'P{o} grv-pall','P{o}foot-grv','P{o}rad-foot',...
+    'Beta','nu',...
+    'PRTgrv','PRTfoot','PRTrad',...
+    'PRTfoot/grv','PRTrad/foot',...
+    't{20}grv','t{20}foot','t{20}rad',...
+    't20(foot-grv)','t20(rad-foot)',...
+    'Area1','Area2','Sin/Spal','Sjet/Sin','MaxKeyVel',...
+    'a2maxOverA1simult','a2maxOvera1Targ','a2maxOvera2Targ','DeltaPfoot2mouthAta2max','a2maxVec','a2maxOverA1smooth',...
+    'gofr2','LateralChkSec'};
+legend(namevarsall);
+
+figure(); 
+for idx=1:12
+
+    ff = polyfit( 12*log2(F1MEAN/440), log10(median(MX(:,:,idx),1,'omitnan')), 1);
+    plot(12*log2(F1MEAN/440), log10(median(MX(:,:,idx),1,'omitnan')) ,'-kd');
+    hold on;
+    plot( 12*log2(F1MEAN/440), polyval(ff,12*log2(F1MEAN/440)),'--r');
+    grid on; box on;
+    hold off;
+    title(sprintf('Variable: %s. Slope %2.5f, offset %2.5f ',namevarsall{idx}, ff(1),ff(2)));
+    drawnow;
+    pause();
+end
+
 
 
 
@@ -947,43 +989,6 @@ p = polyfit(linidx, mean(RatioToPlot,1,'omitnan'),1);
 hold on;
 plot(polyval(p,linidx),'--r');
 xlabel('Num pipe','interpreter','latex','fontsize',FSZ);
-
-
-
-
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Geometry
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-FSZ = 17;
-figure(); hold on;
-
-for idx = 1 :12
-    tmp_data = log10( median(MX(:,:,idx)) );
-    val_absc = interp1(freqlogax, tmp_data, 0);
-    plot(freqlogax, tmp_data-val_absc ,'-') ;
-    
-end
-grid on; box on;
-
-
-
-namevarsall = {'Lp','Vf','PWdth','TNHD','INLET','SJET','h','H','Wm','Dp',...
-    'Vgrv','Qfact','f1','theta','Qpall2grv','Qgr2ft','Qjet','Rmplssg',...
-    'P{o} pall','P{o}grv','P{o}foot','P{o}rad',...
-    'P{o} grv-pall','P{o}foot-grv','P{o}rad-foot',...
-    'Beta','nu',...
-    'PRTgrv','PRTfoot','PRTrad',...
-    'PRTfoot/grv','PRTrad/foot',...
-    't{20}grv','t{20}foot','t{20}rad',...
-    't20(foot-grv)','t20(rad-foot)',...
-    'Area1','Area2','Sin/Spal','Sjet/Sin','MaxKeyVel',...
-    'a2maxOverA1simult','a2maxOvera1Targ','a2maxOvera2Targ','DeltaPfoot2mouthAta2max','a2maxVec','a2maxOverA1smooth',...
-    'gofr2','LateralChkSec'};
-
-ax=gca;
-% ax.XTickLabel = namevarsall;
-
 
 
 
