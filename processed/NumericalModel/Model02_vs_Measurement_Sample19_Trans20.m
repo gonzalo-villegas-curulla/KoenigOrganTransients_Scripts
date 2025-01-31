@@ -27,7 +27,9 @@
 % wavelet toolbox and system identification toolbox.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc, clear; fprintf('Starting script...\n');
+try 
 cd '/media/organ/ExtremeSSD/OrganPipe2023-2024/DataTransients/processed/NumModel'
+end
 
 
 PIPENUM = 19; TRANSNUM  = 20; 

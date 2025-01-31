@@ -235,7 +235,7 @@ for idx = 1 : length(files)
     MX(find(A2max_over_A1simult) ,idx,43)      = A2max_over_A1simult(find(A2max_over_A1simult));
     MX(find(A2max_over_A1target),idx,44)       = A2max_over_A1target(find(A2max_over_A1target));
     MX(find(A2max_over_A2target),idx,45)       = A2max_over_A2target(find(A2max_over_A2target));
-    MX(find(pf_at_a2max),idx,46) = pf_at_a2max(find(pf_at_a2max)) - 0;%+0*pm_at_a2max; % DeltaP (foot-mouth) /!\ Decide whether you keep the Pm'
+    MX(find(pf_at_a2max),idx,46)               = pf_at_a2max(find(pf_at_a2max)) - 0;%+0*pm_at_a2max; % DeltaP (foot-mouth) /!\ Decide whether you keep the Pm'
     MX(find(a2max_vec),idx,47)                 = a2max_vec(find(a2max_vec));
     MX(find(max_a2_over_a1), idx, 48)          = max_a2_over_a1(find(max_a2_over_a1));
     MX(find(gofr2), idx, 49)                   = gofr2;
@@ -243,13 +243,14 @@ for idx = 1 : length(files)
 
     MX(find(t10groove),  idx,51)  = t10groove;
     MX(find(PRT10groove),idx,52)  = PRT10groove;
-    MX(find(t5groove),   idx,53)  = t5groove;
-    MX(find(PRT5groove), idx,54)  = PRT5groove;
+    
 
     MX(find(t10foot),    idx,55)  = t10foot;
     MX(find(PRT10foot),  idx,56)  = PRT10foot;
-    MX(find(t5foot),     idx,57)  = t5foot;
-    MX(find(PRT5foot),   idx,58)  = PRT5foot;
+    MX(find(t10mouth), idx, 57)   = t10mouth;
+    MX(find(PRT10pipe), idx, 58)  = PRT10pipe;
+    
+
    
     %%%%%%%%%% MARGINAL ASPECTS %%%%%%%%%% 
     PRTpipeMedian(idx) = median(PRT20pipe(PRT20pipe~=0),'omitnan');

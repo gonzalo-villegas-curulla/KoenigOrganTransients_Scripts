@@ -5,7 +5,7 @@ clc; clear;
 fs = 51.2e3;
 dt = 1/fs;
     videoObj = VideoWriter('output_video.avi'); 
-    videoObj.FrameRate = 12; 
+    videoObj.FrameRate = 16; 
     open(videoObj);
 
 files=dir('A*.mat');
@@ -50,9 +50,6 @@ t10groove = zeros(NT,1);
 t10foot   = zeros(NT,1);
 t10mouth  = zeros(NT,1);
 
-t5groove = zeros(NT,1);
-t5foot   = zeros(NT,1);
-t5mouth  = zeros(NT,1);
 
 PRT20groove = zeros(NT,1);
 PRT20foot   = zeros(NT,1);
@@ -62,9 +59,6 @@ PRT10groove = zeros(NT,1);
 PRT10foot   = zeros(NT,1);
 PRT10pipe   = zeros(NT,1);
 
-PRT5groove = zeros(NT,1);
-PRT5foot   = zeros(NT,1);
-PRT5pipe   = zeros(NT,1);
 
 Area1     = zeros(NT,1);
 Area2     = zeros(NT,1);
@@ -83,6 +77,8 @@ pf_at_a2max         = zeros(NT,1);
 pm_at_a2max         = zeros(NT,1);
 max_a2_over_a1      = zeros(NT,1);
 
+overshootRaw    = zeros(NT,1);
+overshootSmooth = zeros(NT,1);
 
 % Retrieve transient location running (DetectVelocityPeaks.m) ============
 lk_foot     = KeyDownIdx;
@@ -94,9 +90,15 @@ LENretro = fix(0.100*fs); % walk back from key onset
 LENpost  = fix(2.2*fs + 0*0.600*fs); % Walk forward from key onset % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PUT IT BACK TO 0.600f*s
 AvTimeDur  = 0.500; % Transient duration plus headroom
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Segment and loop over all transients of current file
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    % %                             % %
+                                    % %%%%%%%      SEGMENT      %%%%%%%
+                                    % %%%%%%%      PROCESS      %%%%%%%
+                                    % %                             % %
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 fighand = figure(20);clf; 
 axhand = axes(fighand); cla;        
@@ -138,29 +140,24 @@ for idx = 1 : length(lk_foot)
         
         % GROOVE /!\  ~~~~~~~~~~~~~~~~~
         
-        tmp_gr = x(3, mask );
-        OFFSET = mean(tmp_gr(1:100));
-        tmp_gr = tmp_gr - OFFSET;
-        groove_trans{idx} = tmp_gr;        
+        tmp_gr              = x(3, mask );
+        OFFSET              = mean(tmp_gr(1:100));
+        tmp_gr              = tmp_gr - OFFSET;
+        groove_trans{idx}   = tmp_gr;        
       
-        Pgroove_targ(idx) = mean(x(3, carefulmask ))-OFFSET;        
-        PGTI = Pgroove_targ(idx);
+        Pgroove_targ(idx)   = mean(x(3, carefulmask ))-OFFSET;        
+        PGTI                = Pgroove_targ(idx);
 
-        t20idx            = find(tmp_gr/PGTI >0.2, 1, 'first');
-        t20idxgr = t20idx;
-        t80idx            = find(tmp_gr/PGTI >0.8, 1, 'first');        
+        t20idx              = find(tmp_gr/PGTI >0.2, 1, 'first');
+        t20idxgr            = t20idx;
+        t80idx              = find(tmp_gr/PGTI >0.8, 1, 'first');        
         
-        t20groove(idx)    = dt*(t20idx-LENretro ); % in [s]
+        t20groove(idx)      = dt*(t20idx-LENretro ); % in [s]
         PRT20groove(idx)    = dt*(t80idx-t20idx);
         
         t10groove(idx)   = dt*( find( tmp_gr/PGTI < 0.1,1, 'last') - LENretro);
         PRT10groove(idx) = dt*( find( tmp_gr/PGTI > 0.9,1,'first') - find(tmp_gr/PGTI<0.1,1,'last') ); 
-
-        t5groove(idx)   = dt*( find(tmp_gr/PGTI <0.05, 1, 'last') - LENretro) ;
-        PRT5groove(idx) = dt*( find(tmp_gr/PGTI>0.95,1,'first') - find(tmp_gr/PGTI<0.05,1,'last') );
         
-
-
 
         % FOOT  /!\  ~~~~~~~~~~~~~~~~~
         tmp_ft          = x(4, mask );
@@ -177,11 +174,15 @@ for idx = 1 : length(lk_foot)
         PRT20foot(idx) = dt*(t80idx  - t20idx );
 
         t10foot(idx)   = dt*( find(tmp_ft/PFTI<0.1,1,'last') - LENretro);
-        PRT10foot(idx) = dt*( find(tmp_ft/PFTI>0.9,1,'first') - find(tmp_ft/PFTI<0.1,1,'last') );
+        PRT10foot(idx) = dt*( find(tmp_ft/PFTI>0.9,1,'first') - find(tmp_ft/PFTI<0.1,1,'last') );        
+        
+                %%% Overshooot ===============
+                list = ['A03','A04','A05','A06','A07','A09','A10','A11','A13','A15','A17','A19','A24','A25',...
+                    'A27','A29','A32','A34','A37','A39','A41','A44'];
+                
 
-        t5foot(idx)    = dt*( find(tmp_ft/PFTI<0.05,1,'last') - LENretro );
-        PRT5foot(idx)  = dt*( find(tmp_ft/PFTI>0.95,1,'first') - find(tmp_ft/PFTI<0.05,1,'last') );
-
+                
+        
 
         
         % RADIATED SOUND/PIPE/MOUTH  /!\  ~~~~~~~~~~~~~~~~~
@@ -286,11 +287,8 @@ for idx = 1 : length(lk_foot)
         t20mouth(idx)  = dt*(t20idxp-LENretro );
         PRT20pipe(idx) = dt*(t80idxp-t20idxp);  
 
-        t10mouth(idx)   = dt*( find(enveltot/PPTI<0.1,1,'last') - LENretro );
-        t5mouth(idx)    = dt*( find(enveltot/PPTI<0.05, 1, 'last') - LENretro );
-
+        t10mouth(idx)   = dt*( find(enveltot/PPTI<0.1,1,'last') - LENretro );        
         PRT10pipe(idx) = dt*( find(enveltot/PPTI>0.9,1,'first') - find(enveltot/PPTI<0.1,1,'last') );
-        PRT5pipe(idx)  = dt*( find(enveltot/PPTI>0.95,1,'first') - find(enveltot/PPTI<0.05,1,'last') );
         
         % Normalize by their steady-state values
         Fund     = envel_first/mean(envel_first(mask3));
@@ -328,11 +326,76 @@ for idx = 1 : length(lk_foot)
 
         max_a2_over_a1(idx) = max(ratio_dats(  t20idxp :  t80idxp+fix(50*PRT20foot(idx)*fs)   ));
        end % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %        VISUALIZATIONS
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       
+       
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    % %                             % %
+                                    % %%%%%%%   VISUALIZATIONS  %%%%%%%
+                                    % %                             % %
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       
+        
+                                    
 
         if 1
+%             dataguar = tmp_ft(:)/Pfoot_targ(idx);
+%             dataguar = tmp_ft(1:fix(0.500*fs))/mean(tmp_ft(fix(0.300*fs):fix(0.500*fs)));
+            segme = tmp_ft( 1 : fix(0.100*fs) + fix(fs*t10foot(idx)) + fix(10*PRT10foot(idx)*fs) );
+            dataguar = segme / mean(segme(end-fix(0.010*fs) : end));
+            
+            
+            [b_foot_LP,a_foot_LP] = butter(2, 1.75*f1estim/fs/2, 'low');
+            meanline = filtfilt(b_foot_LP,a_foot_LP, dataguar);                        
+
+            figure(20); clf;    
+%             overshoot(meanline,fs);            
+            overshoot(dataguar,fs);  
+            hold on;
+            plot([0:length(dataguar)-1]*dt, meanline, 'm');
+            hold off;
+
+%             overshootRaw(idx)    = overshoot(dataguar,fs);
+%             overshootSmooth(idx) = overshoot(meanline,fs);
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none'); 
+            xlabel('Time [s]');
+            ylim([-0.2 1.4]);
+%             xlim([0 2.5]);
+%             xlim([0, t10foot(idx)+80*PRT10foot(idx)  ]);
+            drawnow();
+
+            
+            frame = getframe(gcf);
+            writeVideo(videoObj, frame);
+        end
+        
+
+        if 0
+            dataguar = tmp_ft/Pfoot_targ(idx);
+            [b_foot_LP,a_foot_LP] = butter(2, 1.75*f1estim/fs/2, 'low');
+            meanline = filtfilt(b_foot_LP,a_foot_LP, dataguar);
+            dataguar = circshift(dataguar, -fix(t10foot(idx)*fs)-LENretro + fix(5*T1estim*fs)  );
+            meanline   = circshift(meanline,  -fix(t10foot(idx)*fs) -LENretro + fix(5*T1estim*fs)      );
+                plot(axhand, [0:length(tmp_ft)-1]*dt, dataguar) ;
+                grid on; box on; hold on;
+                plot(axhand, [0:length(tmp_ft)-1]*dt, meanline, 'linewidth',2,'color','red');
+                plot(axhand, 10*[1,1]*T1estim,[-0.2,1.4],'--k');
+                plot(axhand, 20*[1,1]*T1estim,[-0.2,1.4],'--k');
+                plot(axhand, 30*[1,1]*T1estim,[-0.2,1.4],'--k');
+                plot(axhand, 40*[1,1]*T1estim,[-0.2,1.4],'--k');
+                plot(axhand, 50*[1,1]*T1estim,[-0.2,1.4],'--k');
+                plot(axhand, 70*[1,1]*T1estim,[-0.2,1.4],'--k');
+                plot(axhand, 90*[1,1]*T1estim,[-0.2,1.4],'--k');
+            hold off;
+            ylim([-0.2 1.4]);
+            xlim([0 30*T1estim]);
+            title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(idx)]), 'interpreter','none'); 
+            xlabel('Time [s]');
+%             drawnow;
+%             frame = getframe(gcf);
+%             writeVideo(videoObj, frame);    
+        end
+        if 0
             plot(axhand, [0:length(enveltot)-1]*dt, pipecurr(1:hL)/PPTI);
             hold on;
             plot(axhand, [0:length(enveltot)-1]*dt, enveltot/PPTI);
@@ -531,9 +594,14 @@ T1 = 1./f1;
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  FOOT PRESSURE FIT beta and nu
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    % %                             % %
+                                    % %%%%%%% FOOT PRESSURE FIT %%%%%%%
+                                    % %                             % %
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 % PREPARE FIT OPTIONS ===========================
 
@@ -579,7 +647,7 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<
     xData = [0:length(yData)-1]*dt;
     [FitRes{jdx}, gof{jdx}] = fit( xData', yData', ft, opts );
 
-    % Plot fit with data.
+    % **Plot** fit with data.
     if 0
         
         plot(axhand, FitRes{jdx}, xData, yData);
@@ -618,7 +686,13 @@ nufit    = dfit;
 RJV = sqrt(2*Pfoot_targ(:)/1.2)./(thedata.PR_params.Wm*f1(:));
 Wm  = thedata.PR_params.Wm;
 
-% %%%%%% SAVE processed data and results %%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    % %                    % %
+                                    % %%%%%%  SAVE  %%%%%%%%%%
+                                    % %                    % %
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%
+                                    %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 datafilename = filename(1:end-4);
 
@@ -628,11 +702,12 @@ if 1
         'PpalletB_targ','Pgroove_targ','Pfoot_targ','Ppipe_targ',...
         't20groove','t20foot','t20mouth',...
         'PRT20groove','PRT20foot','PRT20pipe',...
-        't10groove','PRT10groove','t5groove','PRT5groove',...
-        't10foot','PRT10foot','t5foot','PRT5foot',...
-        't10mouth','t5mouth','PRT10pipe','PRT5pipe',...
+        't10groove','PRT10groove',...
+        't10foot','PRT10foot',...
+        't10mouth','PRT10pipe',...
         'KeyMovingTime','gofr2','A2max_over_A1simult','A2max_over_A1target',...
-        'A2max_over_A2target','pf_at_a2max','pm_at_a2max','a2max_vec','max_a2_over_a1');    
+        'A2max_over_A2target','pf_at_a2max','pm_at_a2max','a2max_vec','max_a2_over_a1',...
+        'overshootRaw','overshootSmooth');    
     
     fprintf('Ellapsed time with this file: %1.2f \n', toc(tinit));
 end

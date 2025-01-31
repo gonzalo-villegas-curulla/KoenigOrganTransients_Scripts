@@ -35,18 +35,19 @@ addpath('./processed/');
 % [50] Lateral stroke area of pallet valve at max opening (smaller than Slot Area = PWidth*Length_win_slot =MX(:,:,3)*0.129;
 
 
-% [51]: t10groove [52]: PRT10groove [53]:t5groove  [54]:PRT5groove
-% [55]: t10foot   [56]: PRT10foot   [57]: t5foot   [58]: PRT5foot
+% [51]: t10groove [52]: PRT10groove 
+% [55]: t10foot   [56]: PRT10foot 
+% [57] t10pipe   [58]: PRT10pipe
 
 
 rho = 1.2;
 co  = 340;
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %       Geometry
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %       Geometry
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% All geometry vars w.r.t. f1/440
 FSZ = 17;
@@ -128,11 +129,11 @@ ax=gca; ax.YScale = 'log';
 
 
 
-        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %       Steady-State analysis
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            %       Steady-State analysis
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %% Estimation of groove flow velocity
@@ -167,7 +168,7 @@ legend('$\Delta P_{pall2gr}/P_{pall} = |P^{\oplus}_{gr}-P^{\oplus}_{pall}|/P^{\o
     '$\Delta P_{ft2m}\ /P_{pall}  = |\langle P^{\oplus}_{m}\rangle-P^{\oplus}_{ft}|/P^{\oplus}_{pall}$','interpreter','latex');
 box on; grid on;
 
-%% Foot flow conservation and Gamma function [OK]
+%% Foot flow conservation and Gamma function [OK][Keep, 2025/01/30, plot1/2 venacontracta]
       
 Qin = 1.0*MX(:,:,5) .* sqrt( 2/rho*( MX(:,:,19) - MX(:,:,21) ) );
 Qj  = 1.0*MX(:,:,6).*sqrt( 2/rho * ( MX(:,:,21) -      0     ) );
@@ -199,7 +200,7 @@ ylabel('$\theta = u_j/f_1 W_m$','interpreter','latex'); ylim([0 12]);
 % Target pressures study
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Ptarg differences all wrt to reservoir, in SS grv and rsv have the same pressure [OK,final]
+%% Ptarg differences all wrt to reservoir, in SS grv and rsv have the same pressure [OK,final][keep][2025/01/30]
 figure();hold on;
     plot( 12*log2(F1MEAN/440), median(abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19) , 1, 'omitnan'),...       
         'k','linestyle','none','marker','o');
@@ -214,7 +215,7 @@ legend('$\widetilde{\Delta P}_{pall2grv} = |P^{\oplus}_{gr}-P^{\oplus}_{pall}|/P
     '$\widetilde{\Delta P}_{grv2ft}\  = |P^{\oplus}_{ft}-P^{\oplus}_{grv}|/P^{\oplus}_{pall}$',...
     '$\widetilde{\Delta P}_{ft2m}\ \   = |\langle P^{\oplus}_{m}\rangle-P^{\oplus}_{ft}|/P^{\oplus}_{pall}$','interpreter','latex');
 
-%% Pfoot target versus Sj/Sin [ok]
+%% Pfoot target versus Sj/Sin [ok][keep][2025/01/30][plot2/2, venacontracta]
 
  % [Can we predict PfootTarg just by Sj and Sin?]
  
@@ -230,7 +231,8 @@ legend('$\widetilde{\Delta P}_{pall2grv} = |P^{\oplus}_{gr}-P^{\oplus}_{pall}|/P
  
 FitFlowConserv = polyfit( Sgeom_ratio_measured , Qj_over_Qin ,1);
   
-A = FitFlowConserv(1); B = FitFlowConserv(2);
+A = FitFlowConserv(1); 
+B = FitFlowConserv(2);
 Gamma    = (A * S_axes + B); 
 GammaInv = 1./Gamma;
  
@@ -270,7 +272,8 @@ end
  xlabel('$\frac{\mathcal{S}_j}{ \mathcal{S}_{in}}$ [n.u.]', 'interpreter','latex');
 
 
-%% uj/uin (no vena contracta) [OK]
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% uj/uin (no vena contracta) [OK]
 
 figure();
 scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan') , median(MX(:,:,18),1,'omitnan'), 'dk', 'filled');
@@ -313,17 +316,109 @@ title('Expected mouth-rad pressure as per eqs. 9-10-11 of model and Qj=Qin, no a
 
 
 
-        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %       Transient analysis
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %       Transient analysis
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Characteristic times ============
+
+Vgrv = median(MX(:,:,11),1,'omitnan');
+Vf   = median(MX(:,:,2),1, 'omitnan');
+
+Spall_Slot    = median(MX(:,:,3),1,'omitnan')*0.1298; % Perforated rectangles on the plate, with the same width as the groove channel
+Spall_Lateral = PalletValveStrokeArea(maskpipes); % At maximum aperture of valve, adding areas of a rectangle and two triangles
+Sin = 1*median(MX(:,:,5),1,'omitnan');
+Sj  = 1*median(MX(:,:,6),1,'omitnan');
+
+figure(21);clf;
+
+subplot(121);
+plot(12*log2(F1MEAN/440), log10( Vgrv(:)./(co * Spall_Lateral(:))),'o');
+hold on; box on; grid on;
+plot(12*log2(F1MEAN/440), log10(Vgrv./(co*Sin)) ,'o');
+legend('V_{grv}/c_O S_{pall}','V_{grv} / c_o S_{in}');
+ylim([-3.5 0]); xlim([-20 23]);
+
+subplot(122);
+plot( 12*log2(F1MEAN/440), log10( Vf./(co*Sin)) , 'o');
+hold on; box on; grid on;
+plot(12*log2(F1MEAN/440), log10(Vf./(co*Sj)), 'o');
+legend('V_f / c_o S_{in}','V_f / c_o S_J');
+ylim([-2.3 0]); xlim([-20 23]);
+
+
+% [Vgr/(c * Spall)]
+
+% [Vgr / ( c * Sin)]
+
+% [Vf / (c * Sin)]
+
+% [Vf / ( c * Sj)]
+
+
+% Characteristic lengths ============
+
+% [L_pall / c]
+% 8mm / 340m/s   = 2.3529e-5 s (0.0235 ms)
+% [L_in / c]
+% ~1mm+ / 340m/s = 0.0029+ ms
+% [L_j / c]
+% ~1mm/340m/s    = 0.0029 ms
+
+% Geometrical sections comparison =============0
+figure();
+plot(12*log2(F1MEAN/440));
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Groove and Foot analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% t10 delays: mech, hydro, acoust [[[to keep, 21/01/2025]]]
+
+figure();hold on;
+errorbar( median(12*log2(MX(:,:,13)/440),1,'omitnan')', ...
+    F1MEAN.*median(abs(MX(:,:,57)-MX(:,:,55) ),1,'omitnan')',...
+    std( MX(:,:,13).* abs(   MX(:,:,57)-MX(:,:,55) ) ,'omitnan'),...
+    ':v','color',[1,1,1]*0.7);
+
+plot(  median(12*log2(MX(:,:,13)/440),1,'omitnan') , ...
+    median(1e3*MX(:,:,51),1,'omitnan'),...
+    '-o', 'Color','b');
+
+plot( median(12*log2(MX(:,:,13)/440),1,'omitnan'),...
+        median(    1e3*(MX(:,:,55)-MX(:,:,51) ),1,'omitnan'),...
+        '-*k');
+    
+legend('Acoust.Delay/$T_1$','Mech.Delay [ms]','Hydrod.Delay [ms]', 'interpreter','latex','location','northwest');
+% ylabel('Delay (lin)','interpreter','latex');
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); 
+box on; grid on;% ylim([0 2]);
+ylim([-3 20]); xlim([-20 23]);
+
+%% PRT10ft and PRT10grv, by tessitura :: with errors [[[Keep 2025/01/30]]]
+figure();
+errorbar(12*log2(F1MEAN/440), ...
+    1e3*median(MX(:,:,52),1,'omitnan'), ...
+   std(1e3*MX(:,:,52),1,'omitnan')' ,...
+   'marker','d', 'linestyle','none', 'Color', 'k','markerfacecolor','k');
+
+hold on;
+errorbar(12*log2(F1MEAN/440), ...
+    1e3*median(MX(:,:,56),1,'omitnan'), ...
+    std(1e3*MX(:,:,56),1,'omitnan')',...
+    'marker','s','linestyle', 'none', 'color', 'k');
+    
+legend('$PRT^{90}_{grv}$','$PRT^{90}_{ft}$','interpreter','latex','location','NorthEast');
+xlabel('$12\times log_2(f_1/440 Hz)$', 'interpreter','latex');
+ylabel('[ms]','interpreter','latex');
+grid on; box on;
+ylim([0 8]);
 
 
 %% t20grv - t20foot, by tessitura;  06/12/2024[[[[[[06/12/2024 [to keep]]]]]]]
@@ -374,17 +469,6 @@ grid on; box on;
 xlabel('$12\times log_2 (f_1/440 Hz)$','interpreter','latex');
 ylabel('$t^{10}_f - t^{10}_{grv}$ [ms]','interpreter','latex');
 ylim([0 2.5]);
-
-%% PRT10ft and PRT10grv, by tessitura
-figure();
-scatter(12*log2(F1MEAN/440), 1e3*median(MX(:,:,52),1,'omitnan'), 'kd','filled');
-hold on;
-scatter(12*log2(F1MEAN/440), 1e3*median(MX(:,:,56),1,'omitnan'), 'ks');
-legend('$PRT^{90}_{grv}$','$PRT^{90}_{ft}$','interpreter','latex','location','NorthEast');
-xlabel('$12\times log_2(f_1/440 Hz)$', 'interpreter','latex');
-ylabel('[ms]','interpreter','latex');
-grid on; box on;
-ylim([0 8]);
 
 
 %% t90ft-t90grv by tessitura

@@ -35,8 +35,9 @@ addpath('./processed/');
 % [50] Lateral stroke area of pallet valve at max opening (smaller than Slot Area = PWidth*Length_win_slot =MX(:,:,3)*0.129;
 
 
-% [51]: t10groove [52]: PRT10groove [53]:t5groove  [54]:PRT5groove
-% [55]: t10foot   [56]: PRT10foot   [57]: t5foot   [58]: PRT5foot
+% [51]: t10groove [52]: PRT10groove 
+% [55]: t10foot   [56]: PRT10foot 
+% [57] t10pipe   [58]: PRT10pipe
 
 
 rho = 1.2;
@@ -324,6 +325,32 @@ title('Expected mouth-rad pressure as per eqs. 9-10-11 of model and Qj=Qin, no a
 % Groove and Foot analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% t10 delays: mech, hydro, acoust [[[to keep, 21/01/2025]]]
+
+figure();hold on;
+errorbar(  median(12*log2(MX(:,:,13)/440),1,'omitnan') , ...
+    median(1e3*MX(:,:,51),1,'omitnan'),...
+    std(1e3*MX(:,:,51),'omitnan' )    ,...
+    '-o');
+
+% errorbar( median(12*log2(MX(:,:,13)/440),1,'omitnan'),...
+%         median(    1e3*(MX(:,:,55)-MX(:,:,51) ),1,'omitnan'),...
+%         std( 1e3*(MX(:,:,55)-MX(:,:,51) ) ,'omitnan' ),...
+%         '-*k');
+plot( median(12*log2(MX(:,:,13)/440),1,'omitnan'),...
+        median(    1e3*(MX(:,:,55)-MX(:,:,51) ),1,'omitnan'),...
+        '-*k');
+    
+errorbar( median(12*log2(MX(:,:,13)/440),1,'omitnan')', ...
+    F1MEAN.*median(abs(MX(:,:,57)-MX(:,:,55) ),1,'omitnan')',...
+    std( MX(:,:,13).* abs(   MX(:,:,57)-MX(:,:,55) ) ,'omitnan'),...
+    '-vr');
+
+legend('Mech.Delay [ms]','Hydrod.Delay [ms]','Acoust.Delay/$T_1$', 'interpreter','latex','location','northwest');
+% ylabel('Delay (lin)','interpreter','latex');
+xlabel('$12log_2(f_1/440)$','interpreter','latex'); 
+box on; grid on;% ylim([0 2]);
+ylim([-3 20]);
 
 
 %% t20grv - t20foot, by tessitura;  06/12/2024[[[[[[06/12/2024 [to keep]]]]]]]
