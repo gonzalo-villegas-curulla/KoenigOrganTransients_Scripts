@@ -338,7 +338,7 @@ for idx = 1 : length(lk_foot)
         
                                     
 
-        if 1
+        if 0
 %             dataguar = tmp_ft(:)/Pfoot_targ(idx);
 %             dataguar = tmp_ft(1:fix(0.500*fs))/mean(tmp_ft(fix(0.300*fs):fix(0.500*fs)));
             segme = tmp_ft( 1 : fix(0.100*fs) + fix(fs*t10foot(idx)) + fix(10*PRT10foot(idx)*fs) );
@@ -639,8 +639,8 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<
     opts.StartPoint = [Ptar     300   0.01   0.5];
     opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
 
-    init_idx = find( foot_trans{jdx}/Pfoot_targ(jdx)< 0.2, 1, 'last') - fix(fs*5e-3);
-    end_idx  = find( foot_trans{jdx}/Pfoot_targ(jdx)>0.8, 1, 'first') + fix(NumPRTs*PRT20foot(jdx)*fs);
+    init_idx = find( foot_trans{jdx}/Pfoot_targ(jdx)< 0.1, 1, 'last') - fix(fs*5e-3);
+    end_idx  = find( foot_trans{jdx}/Pfoot_targ(jdx)> 0.9, 1, 'first') + fix(NumPRTs*3*PRT20foot(jdx)*fs);
 
     % Fit model to data.
     yData = foot_trans{jdx}(init_idx : end_idx);
@@ -648,7 +648,7 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<
     [FitRes{jdx}, gof{jdx}] = fit( xData', yData', ft, opts );
 
     % **Plot** fit with data.
-    if 0
+    if 1
         
         plot(axhand, FitRes{jdx}, xData, yData);
         legend('Pressure vs. Time', 'Fitted model', 'Location', 'SouthEast', 'Interpreter', 'none' );

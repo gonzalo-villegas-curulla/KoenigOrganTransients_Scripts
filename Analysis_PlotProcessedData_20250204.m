@@ -329,36 +329,6 @@ Vf   = median(MX(:,:,2),1, 'omitnan');
 
 Spall_Slot    = median(MX(:,:,3),1,'omitnan')*0.1298; % Perforated rectangles on the plate, with the same width as the groove channel
 Spall_Lateral = PalletValveStrokeArea(maskpipes); % At maximum aperture of valve, adding areas of a rectangle and two triangles
-Sin = 1*median(MX(:,:,5),1,'omitnan');
-Sj  = 1*median(MX(:,:,6),1,'omitnan');
-
-figure(21);clf;
-
-subplot(121);
-plot(12*log2(F1MEAN/440), log10( Vgrv(:)./(co * Spall_Lateral(:))),'o');
-hold on; box on; grid on;
-plot(12*log2(F1MEAN/440), log10(Vgrv./(co*Sin)) ,'o');
-legend('V_{grv}/c_O S_{pall}','V_{grv} / c_o S_{in}');
-ylim([-3.5 0]); xlim([-20 23]);
-ylabel('log10')
-
-subplot(122);
-plot( 12*log2(F1MEAN/440), log10( Vf./(co*Sin)) , 'o');
-hold on; box on; grid on;
-plot(12*log2(F1MEAN/440), log10(Vf./(co*Sj)), 'o');
-legend('V_f / c_o S_{in}','V_f / c_o S_J');
-ylim([-2.3 0]); xlim([-20 23]);
-yabel('log10');
-
-
-% [Vgr/(c * Spall)]
-
-% [Vgr / ( c * Sin)]
-
-% [Vf / (c * Sin)]
-
-% [Vf / ( c * Sj)]
-
 
 % Characteristic lengths ============
 
@@ -370,22 +340,116 @@ yabel('log10');
 % ~1mm/340m/s    = 0.0029 ms
 
 % Geometrical sections comparison =============0
-figure();
+figure(22);clf;
 plot(12*log2(F1MEAN/440), log10(Spall_Lateral)   ,'-*');
 hold on;
 plot(12*log2(F1MEAN/440), log10(Sin), '-*');
 plot(12*log2(F1MEAN/440), log10(Sj), '-*');
 legend('S_{pall,lat}','S_{in}','S_J');
 box on; grid on; 
-ylim([-6 0]);
+ylim([-6 0]); ylabel('log10');
+
+
+%% Plot1
+
+figure(23); clf;
+plot( 12*log2(F1MEAN/440),...
+    log10( Vgrv(:)./(co*Spall_Lateral)) ,...
+    '-sk', 'MarkerFaceColor','k');
+hold on;
+
+numer = Vgrv(:);
+denom = co *MX(:,:,6).*sqrt( MX(:,:,21)./( MX(:,:,19)-MX(:,:,21) ) );
+    denom_memo = denom;
+denom = median(denom,1,'omitnan');
+denom = denom(:);
+resul =  numer./denom;
+
+plot(12*log2(F1MEAN/440), log10(resul) , '-dk');
+
+ylabel('$[s] \ (log_{10})$',       'interpreter','latex');
+xlabel('$12 \times log_2(f_1/440)$','interpreter', 'latex');
+legend('$V_{grv}/c_o \textrm{S}_{pall}$','$V_{grv}/c_o \textrm{S}_{in}$',...
+    'location', 'best', 'interpreter','latex');
+grid on; box on;
+xlim([-20 23]);
+
+
+%% Plot2
+
+numer = Vf(:);
+denom = co *MX(:,:,6).*sqrt( MX(:,:,21)./( MX(:,:,19)-MX(:,:,21) ) );
+    denom_memo = denom;
+denom = median(denom,1,'omitnan');
+denom = denom(:);
+resul1 = numer./denom;
+
+
+denom = median(co .* MX(:,:,6), 1, 'omitnan');
+denom = denom(:);
+resul2 = numer./denom;
+
+figure(24); clf;
+plot( 12*log2(F1MEAN/440), 1e3*resul1, '-sk', 'MarkerFaceColor','k');
+hold on;
+plot( 12*log2(F1MEAN/440), 1e3*resul2, '-dk');
+
+ylabel('$[ms]$',                    'interpreter','latex');
+legend('$V_f / c_o \textrm{S}_{in}$','$V_f / c_o \textrm{S}_j$',...
+    'location','best', 'interpreter','latex');
+xlabel('$12 \times log_2(f_1/440)$','interpreter', 'latex');
+grid on; box on;
+ylim([0 30]);
+xlim([-20 23]);
+
+%% Plot3
+numer = median(MX(:,:,11), 1, 'omitnan');
+    numer = numer(:);
+denom = co .* ( Spall_Lateral - median(  MX(:,:,6).*sqrt(MX(:,:,21)./(MX(:,:,19)-MX(:,:,21)))  ,1,'omitnan')' );
+    denom = denom(:);
+resplot1 = numer./denom; 
+% ---
+numer = median(MX(:,:,2), 1, 'omitnan');
+    numer = numer(:);
+denom = median(co*MX(:,:,6).*(sqrt(MX(:,:,21)./(MX(:,:,19)-MX(:,:,21))) - 1) ,1,'omitnan');
+    denom = denom(:);
+resplot2 = abs(numer./denom);
 
 
 
+figure(25); clf;
+plot( 12*log2(F1MEAN/440), log10(resplot1), '-sk', 'markerfacecolor','k');
+hold on;
+plot(12*log2(F1MEAN/440), log10(resplot2),'-dk');
+
+xlim([-20 23]);
+xlabel('$12 \times log_2(f_1/440)$','interpreter', 'latex');
+grid on; box on;
+ylabel('$[s] \ (log_{10})$','interpreter','latex');
+legend('$V_{grv}  / c_o (\textrm{S}_{pall}-\textrm{S}_{in})$','$| V_f/c_o (\textrm{S}_{in}-\textrm{S}_j) |$',...
+    'interpreter','latex', 'location','best');
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Groove and Foot analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% t90 groove, t90 foot [just for inspection]
+figure();
+
+errorbar(12*log2(F1MEAN/440),...
+    median( 1e3*(MX(:,:,51)+MX(:,:,52)),1,'omitnan' ),...
+    std( 1e3*(MX(:,:,51)+MX(:,:,52)) ,1,'omitnan') ) ;
+
+hold on;
+
+errorbar(12*log2(F1MEAN/440),...
+    median( 1e3*(MX(:,:,55)+MX(:,:,56)), 1, 'omitnan') ,...
+    std(  1e3*(MX(:,:,55)+MX(:,:,56)) , 1, 'omitnan') );
+
+grid on; box on; 
+ylim([0 16]);
+legend('t90grv','t90ft');
 
 %% t10 delays: mech, hydro, acoust [[[to keep, 21/01/2025]]]
 
