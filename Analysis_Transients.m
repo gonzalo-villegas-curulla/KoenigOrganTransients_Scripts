@@ -626,7 +626,7 @@ fprintf("Starting beta nu fits...");
 % axhand = axes(fighand); cla;
 
 
-NumPRTs = 1; %length of data after t80foot for the fit
+NumPRTs = 0.5; %length of data after t80foot/t90foot for the fit
 
 for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -640,7 +640,7 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<
     opts.Robust     = 'Bisquare'; % LAR, Off, Bisquare
 
     init_idx = find( foot_trans{jdx}/Pfoot_targ(jdx)< 0.1, 1, 'last') - fix(fs*5e-3);
-    end_idx  = find( foot_trans{jdx}/Pfoot_targ(jdx)> 0.9, 1, 'first') + fix(NumPRTs*3*PRT20foot(jdx)*fs);
+    end_idx  = find( foot_trans{jdx}/Pfoot_targ(jdx)> 0.9, 1, 'first') + fix(NumPRTs*PRT10foot(jdx)*fs);
 
     % Fit model to data.
     yData = foot_trans{jdx}(init_idx : end_idx);
@@ -657,7 +657,8 @@ for jdx = 1 : length(foot_trans) % LOOP OVER ALL TRANSIENTS of current file <<<<
         ylabel( 'Foot pressure [Pa]', 'Interpreter', 'none' );
         grid on;
         
-        title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(jdx)]), 'interpreter','none');        
+        title(sprintf([files(BIGIDX).name, ', trans num: ', num2str(jdx)]), 'interpreter','none');   
+        ylim([-50 700]);
         drawnow;
         frame = getframe(gcf);
         writeVideo(videoObj, frame);
