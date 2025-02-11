@@ -9,7 +9,7 @@ dt = 1/fs;
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 1 :  length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 12 :  length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
 
@@ -25,6 +25,28 @@ x = thedata.PR_data.pressureData;
 for idx = 1 : 6
     x(idx,:) = x(idx,:)-mean(x(idx,1:100)); % Correct AUTO-ZERO detection of contidioners
 end
+
+if 1
+    XLIMS = [43 53]+17;
+    mmm = [fix(XLIMS(1)*fs) : fix(XLIMS(2)*fs) ];
+    figure(17); clf;
+    plot(tvec(mmm), x(3,mmm));%./x(2,:));
+    hold on;
+    plot(tvec(mmm), x(4,mmm));%./x(2,:));
+    plot(tvec(mmm), x(5,mmm));%./x(2,:));
+    grid on; xlim(XLIMS);
+    axzh(1) = gca;
+
+    figure(18); clf;
+    plot(tvec(mmm), x(3,mmm)./x(2,mmm));
+    hold on;
+    plot(tvec(mmm), x(4,mmm)./x(2,mmm));
+    plot(tvec(mmm), x(5,mmm)./x(2,mmm));
+    grid on; xlim(XLIMS);
+    axzh(2) = gca;
+    linkaxes(axzh, 'x');
+end
+
 
 % Retrieve key movement for reference indexing
 [KeyDownIdx,KeyUpIdx,KeyMovingTime,DurNotesInS, VelPeakIdxPos,VelPeakIdxNeg] = DetectVelocityPeaks_func(x(6,:),tvec,filename);
@@ -697,7 +719,7 @@ Wm  = thedata.PR_params.Wm;
 
 datafilename = filename(1:end-4);
 
-if 1
+if 0
     save(['./processed/' datafilename '_PROCESSED.mat'],'f1','betafit','nufit','Ptargfit','delayfit',...
         'Area1','Area2','RJV','Wm','fs',...
         'PpalletB_targ','Pgroove_targ','Pfoot_targ','Ppipe_targ',...

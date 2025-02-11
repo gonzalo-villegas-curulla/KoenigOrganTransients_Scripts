@@ -9,7 +9,7 @@
 *.asv
 *.avi
 
-# ######### SPECIFIC FILES ##########33
+# ######### SPECIFIC FILES ##########
 temp.py
 test.zip
 test01.py
@@ -103,7 +103,7 @@ __pycache__/
 
 BackupData/
 Delete/
-Dismiss_LowRJV/
+Dismiss_*/
 SpecialCases/
 test/
 
