@@ -270,6 +270,65 @@ end
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% ===     Characteristic times: repetition of below's
+fax = 12*log2(F1MEAN/440);
+LW = 1.0;
+
+l_pall = 5e-3;
+l_in   = 1e-3;
+l_j    = 1e-3;
+
+Vgrv = median(MX(:,:,11),1,'omitnan'); Vgrv = Vgrv(:);
+Vf   = median(MX(:,:,2),1, 'omitnan'); Vf = Vf(:);
+
+Spall_max = PalletValveStrokeArea(maskpipes);
+    Spall_max = Spall_max(:); Spall_max = Spall_max(:);
+Sin           = MX(:,:,5);
+    Sin = median(Sin, 1, 'omitnan'); Sin = Sin(:);
+Sj            = 1*MX(:,:,6);
+    Sj = median(Sj, 1, 'omitnan'); Sj = Sj(:);
+
+
+Spall_max_eff = 1.*Spall_max;
+Sin_eff = Sj(:).*sqrt(median(MX(:,:,21),1,'omitnan')'./(median(MX(:,:,19),1,'omitnan')- median(MX(:,:,21),1,'omitnan') )'         );
+Sj_eff = 1.*Sj;
+
+tau_pall_L = l_pall*sqrt(rho/P0)*ones(length(Sin),1);
+tau_in_L   = l_in  *sqrt(rho/P0)*ones(length(Sin),1);
+tau_j_L    = l_j   *sqrt(rho/P0)*ones(length(Sin),1);
+
+tau_pall_V = Vgrv./(Spall_max_eff*co2)*sqrt(P0/rho);
+tau_in_V   = Vgrv./(Sin_eff*co2)*sqrt(P0/rho);
+tau_j_V    = Vgrv./(Sj_eff*co2)*sqrt(P0/rho);
+
+Vf_over_Vgrv = Vf./Vgrv;
+
+Amax = Spall_max_eff*co2./Vgrv*sqrt(rho/P0);
+B = Sin_eff*co2./Vgrv*sqrt(rho/P0);
+C = Sin_eff*co2./Vgrv*sqrt(rho/P0);
+D = Sj_eff*co2./Vgrv*sqrt(rho/P0);
+
+
+figure(24); clf;
+plot(fax, median(MX(:,:,52),1,'omitnan') ,'-o', 'linewidth',LW);
+hold on;
+plot(fax, median(MX(:,:,56),1,'omitnan') ,'-o', 'linewidth',LW);
+% plot(fax, median(MX(:,:,58),1,'omitnan') , '-o', 'linewidth',LW);
+%
+plot(fax, tau_pall_L, '--s', 'linewidth',LW);
+plot(fax, tau_in_L , '--s', 'linewidth',LW);
+plot(fax, tau_j_L,'--s', 'linewidth',LW);
+%
+plot(fax, 1./Amax,'-v', 'linewidth',LW);
+plot(fax, 1./B,'-v', 'linewidth',LW);
+plot(fax, Vf./(Vgrv.*C),'-v', 'linewidth',LW);
+plot(fax, Vf./(Vgrv.*D),'-v', 'linewidth',LW);
+%
+legend('PRT_{grv}','PRT_f','tau grv (L_{grv})','tau in (L_{in})','tau jet (L_{j})','1/A_{max}','1/B','Vf/(Vgrv*C)','Vf/(Vgrv*D)', 'fontsize',12);
+ax=gca; ax.YScale = 'log'; grid on;
+xlabel('12log_2(f_1/440)');
+                   
+
 %% ===     Characteristic times: length, volume, and volume ratio vs. PRT's [potentially yes]
 fax = 12*log2(F1MEAN/440);
 LW = 1.0;
@@ -304,7 +363,7 @@ tau_j_V    = Vgrv./(Sj_eff*co2)*sqrt(P0/rho);
 Vf_over_Vgrv = Vf./Vgrv;
 
 
-figure(24); clf;
+figure(26); clf;
 plot(fax, median(MX(:,:,52),1,'omitnan') ,'-o', 'linewidth',LW);
 hold on;
 plot(fax, median(MX(:,:,56),1,'omitnan') ,'-o', 'linewidth',LW);
@@ -325,7 +384,7 @@ ax=gca; ax.YScale = 'log'; grid on;
 xlabel('12log_2(f_1/440)');
 
 % =========================
-figure(25); clf;plot(fax, median(MX(:,:,52),1,'omitnan') ,'-o', 'linewidth',LW);
+figure(27); clf;plot(fax, median(MX(:,:,52),1,'omitnan') ,'-o', 'linewidth',LW);
 hold on;
 plot(fax, median(MX(:,:,56),1,'omitnan') ,'-o', 'linewidth',LW);
 plot(fax, median(MX(:,:,58),1,'omitnan') , '-o', 'linewidth',LW);
