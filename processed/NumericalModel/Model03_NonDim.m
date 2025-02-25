@@ -53,13 +53,7 @@ P0 = 820;
 % tau_j    = l_j   *sqrt(rho/P0);
 
 
-
-
-
-
-PIPENUM = 19; TRANSNUM  = 20; 
-% PIPENUM = 10; TRANSNUM = 10;
-% PIPENUM = 19; TRANSNUM = 10;
+PIPENUM = 10; TRANSNUM  = 20; 
 
 files = dir('../../A*.mat');
 load(fullfile('../../',files(PIPENUM).name));
@@ -69,8 +63,8 @@ for idx = 1 : 6
     x(idx,:) = x(idx,:) - mean(x(idx,1:1e3));
 end
 
-
-PRES  = x(2,:); % x(1,:); (Keller)
+% x(1,:); (Keller)
+PRES  = x(2,:); 
 PGRV  = x(3,:);
 PF    = x(4,:);
 PRAD  = x(5,:);
@@ -104,16 +98,6 @@ keyx = cumtrapz(dt, keyv);
 keyx(PRECUT + (KeyUpIdx(TRANSNUM)-KeyDownIdx(TRANSNUM)) +fix(1e-3*fs): end) =  keyx(PRECUT + ( KeyUpIdx(TRANSNUM)-KeyDownIdx(TRANSNUM))+fix(1e-3*fs) -1) ;
 
 
-if 0
-figure(21); clf;
-plot(pres);
-hold on;
-plot(pf);
-yyaxis right;
-plot(keyx);
-end
-
-
 % &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 %     DATA prepared: pres, pgrv, pf, prad, keyx
 % &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -124,21 +108,11 @@ end
 % ===================================
 
 
-
-VC3  = 0.70; % Vena pallet valve slot window
-VC4  = 0.62; % Vena Contracta foot inlet (Def. 0.62)
-VC5  = 0.95; % Vena foot outlet (jet) (Def. 0.95)
-
-
-
-VC5 = 0.95;
-VC4 = VC5 * ( 0.01245*(Sin*1e6) + 0.2793  );
-VC3 = VC4 * ( 0.00122*(Sin*1e6) + 0.009434 );
-
+VC3  = 0.6;  % pallet
+VC4  = 0.42; % int
+VC5  = 1.0;  % jet
 
 ramptype = 'pall'; % 'rect'=linear, 'sin'=sinus, 'pall'=palletvalve
-
-% VC3 = 1; VC4 = 1; VC5 = 1;
 
 % ===================================
 %   Physical constants and params
@@ -155,13 +129,13 @@ c   = 340; c2 = c^2; % [m/s]
 %%%%%%%%%%%%%%% (2)(Pallet box)  %%%%%%%%%%%%%%%
 
 V2      = 0.186; % [m^3] Vres = Vbellow + Vtrunk + VpalletBox
-p2Const = 825; % [Pa] Pressostat value @ palletBox/Equiv.Resrv
+p2Const = P0;    % [Pa] Pressostat value @ palletBox/Equiv.Resrv
 
 %%%%%%%%%%%%%%% (3)(Groove)  %%%%%%%%%%%%%%%
 
 GrvWidth  = Pw; %10.9e-3; % (6.2-15.9)mm
-GrvLen    = 0.51;
-GrvHeight = 49.6e-3; 
+GrvLen    = 0.510 ;
+GrvHeight = 0.0496; 
 
 V3        = 1.3*GrvWidth*GrvLen*GrvHeight;   % [m^3] Groove volume 
 l3        = 1.0*8e-3;     % [m] PalletValve-Groove slot inlet
@@ -195,7 +169,7 @@ switch ramptype
         % S3 = (Pw + 0.1298) * keyx;
         
         % (2):
-        faco = 1.5+0*0.999;
+        faco = 1.5 + 0*0.999;
         S3 = (faco*min(palletLHS,palletHtraj)+ palletWid+faco*min(palletRHS,palletHtraj))*keyx/max(keyx);
         
         faco = 0.5;
@@ -211,15 +185,15 @@ mav    = dsp.MovingAverage(fix(0.001*fs));
 
 %%%%%%%%%%%%%%% (4)(Pipe foot)  %%%%%%%%%%%%%%%
 
-V4  = Vf;       % [m^3] (Def. 0.084e-3)
-l4  = 0 +2e-3;           % [m]  Foot inlet channel length (NÉGL.)
-Sin = pi*Rin^2;    % [m^2] Foot inlet cross-section
+V4  = Vf;      
+l4  = 0 + 2e-3;  
+Sin = pi*Rin^2;  
 
 
 %%%%%%%%%%%%%%% (5)(Flue exit)  %%%%%%%%%%%%%%% 
 
-l5  = 0+2e-3;      % [m] Foot outlet channel length (NÉGL.)
-S5  = Sj ;% 3.2940e-5; % [m^2] Foot outlet cross-section
+l5  = 0 + 2e-3; 
+S5  = Sj ;
 
 
 % ===================================
@@ -508,6 +482,16 @@ P5   = 0;
         dydt(4) = rho*c2/V4*( y(3)*S4  -S5*y(5) )         ;
         dydt(5) = 1/rho/l5*(y(4)  - P5)  -1/2/l5*y(5)^2   ;
     end
+
+    
+    
+
+    % dydt(1) = 
+    % dydt(2) = 
+    % dydt(3) = 
+    % dydt(4) = 
+    % dydt(5) = 
+
 
 end
 

@@ -51,6 +51,7 @@ Vf   = median(MX(:,:,2),1, 'omitnan');
 Spall_Slot    = median(MX(:,:,3),1,'omitnan')*0.1298; % Perforated rectangles on the plate, with the same width as the groove channel
 Spall_Lateral = PalletValveStrokeArea(maskpipes); % At maximum aperture of valve, adding areas of a rectangle and two triangles
 
+fax = 12*log2(F1MEAN/440);
 
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -150,6 +151,37 @@ grid on; box on;
 xlabel('$12 \times log_2 (f_1 /  440 Hz) $', 'interpreter','latex');
 ylabel('$\theta = u_j/f_1 W_m$','interpreter','latex'); ylim([0 12]);
 
+%% Flow conservation for pallet-to-groove
+
+Spall_eff = median(MX(:,:,6),1,'omitnan').*sqrt(median(MX(:,:,21),1,'omitnan'))./sqrt( median(MX(:,:,19),1,'omitnan')-median(MX(:,:,20),1,'omitnan'));
+
+figure();
+Pallet_pfit = polyfit(fax,log10(Spall_eff),1);
+plot(fax, log10(Spall_eff), '-o');
+ylabel('Spall eff (log10)');
+grid on;
+hold on;
+
+querypoints = [-20:0.1:23];
+plot(querypoints, polyval(Pallet_pfit, querypoints), '--k');
+text(0.1,-4.4,sprintf('$y=%1.5f x + %1.4f$',Pallet_pfit(1),Pallet_pfit(2) ), 'interpreter','latex');
+xlabel('12log2(f1/440)');
+
+figure();
+Sratio = median(MX(:,:,6),1,'omitnan')./Spall_Lateral';
+
+plot(Sratio, Spall_eff, '-o');
+xlabel('Sj/Spall');
+ylabel('Spall Effective');
+grid on;
+
+Pallet_pfit2 = polyfit(Sratio,Spall_eff,1);
+querypoints = [0:1e-4:0.08];
+hold on;
+plot(querypoints, polyval(Pallet_pfit2, querypoints), '--k');
+text(0.02,0.7e-4,sprintf('$y=%1.5f x + %1.4f$',Pallet_pfit(1),Pallet_pfit(2) ), 'interpreter','latex');
+
+
 %% Foot flow conservation and Gamma function [OK][Keep, 2025/01/30, plot1/2 venacontracta]
       
 Qin = 1.0*MX(:,:,5) .* sqrt( 2/rho*( MX(:,:,19) - MX(:,:,21) ) );
@@ -166,7 +198,6 @@ ylabel('$\Gamma (\mathcal{S})$','interpreter','latex');
 
 querypoints = [0:1e-2:1.5];
 plot(querypoints, polyval(FitFlowConserv, querypoints), '--k');
-
 text(0.8,0.55,sprintf('$y=%1.3f x + %1.3f$',FitFlowConserv(1),FitFlowConserv(2) ), 'interpreter','latex');
 %% Pfoot target versus Sj/Sin [ok][keep][2025/01/30][plot2/2, venacontracta]
 
