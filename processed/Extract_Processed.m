@@ -55,6 +55,38 @@ data_proc.PRT10ft = MX(56,:);
 data_proc.t10rad  = MX(57,:);
 data_proc.PRT10rad  = MX(58,:);
 
+% -------------------------------
+
+Sgrv_eff = MX(3,:)'*0.05;
+
+% % % % Spall_max = PalletValveStrokeArea(maskpipes);
+% % % %     Spall_max = Spall_max(:); Spall_max = Spall_max(:);
+% % % % Sin           = MX(5,:);
+% % % %     Sin = median(Sin, 1, 'omitnan'); Sin = Sin(:);
+Sj            = 1*MX(6,:);
+    Sj = median(Sj, 1, 'omitnan'); Sj = Sj(:);
+
+
+        % % % % Spall_max_eff = 1.*Spall_max;
+Spall_eff = 10.^(  -0.03732*12*log2(F1MEAN/440) - 4.6202 ); % fitted to computed 
+Sin_eff = Sj'.*sqrt( MX(21,:)./(MX(19,:)-MX(21,:)) );
+    Sin_eff = Sin_eff';
+Sj_eff = 1.*Sj;
+
+Vf_over_Vgrv = Vf./Vgrv;
+
+one_over_Amax = Spall_eff*co2./Vgrv'*sqrt(rho/P0);
+one_over_B    = Sin_eff*co2./Vgrv'*sqrt(rho/P0);
+one_over_C    = Sin_eff*co2./Vf'*sqrt(rho/P0);
+one_over_D    = Sj_eff*co2./Vf'*sqrt(rho/P0);
+sigMa         = Spall_eff./Sgrv_eff;
+%----------------------------------------
+data_proc.one_over_Amax = one_over_Amax ;
+data_proc.one_over_B = one_over_B;
+data_proc.one_over_C = one_over_C;
+data_proc.one_over_D = one_over_D;
+data_proc.sigma = sigMa;
+
 
 save('data_proc.mat','data_proc');
 save('./NumericalModel/data_proc.mat','data_proc');

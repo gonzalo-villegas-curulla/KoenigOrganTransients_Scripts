@@ -58,8 +58,7 @@ fax = 12*log2(F1MEAN/440);
                         %       Geometry
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% All geometry vars w.r.t. f1/440
+% All geometry vars w.r.t. f1/440
 FSZ = 17;
 figure(); hold on;
 
@@ -96,7 +95,7 @@ ylabel('mm^2'); xlabel('tessitura [semitones]');
 ax=gca; ax.YScale = 'log';
 legend('Lateral PalletValve','Pallet Slot','Tone Hole','Sin','Sj');
 
-%% Sections
+% Sections
 
 % Geometrical sections comparison =============0
 figure(22);clf;
@@ -109,7 +108,7 @@ box on; grid on;
 ylim([-6 0]); ylabel('log10');
 
 
-%% Sj / Sin
+% Sj / Sin
 
 figure();
 scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median((MX(:,:,6)./MX(:,:,5)),1,'omitnan'), 'kd', 'filled');
@@ -118,17 +117,17 @@ xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on; ylim([0 1.5
 
 
 
-                            %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                             %       Steady-State analysis
                             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Target pressures study
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Ptarg differences all wrt to reservoir, in SS grv and rsv have the same pressure [OK,final][2025/01/30]
+% Ptarg differences all wrt to reservoir, in SS grv and rsv have the same pressure [OK,final][2025/01/30]
 figure();hold on;
     plot( 12*log2(F1MEAN/440), median(abs(MX(:,:,19)-MX(:,:,20))./MX(:,:,19) , 1, 'omitnan'),...       
         'k','linestyle','none','marker','o');
@@ -143,7 +142,7 @@ legend('$\widetilde{\Delta P}_{pall2grv} = |P^{\oplus}_{gr}-P^{\oplus}_{pall}|/P
     '$\widetilde{\Delta P}_{grv2ft}\  = |P^{\oplus}_{ft}-P^{\oplus}_{grv}|/P^{\oplus}_{pall}$',...
     '$\widetilde{\Delta P}_{ft2m}\ \   = |\langle P^{\oplus}_{m}\rangle-P^{\oplus}_{ft}|/P^{\oplus}_{pall}$','interpreter','latex');
 
-%% Theta [OK]
+% Theta [OK]
 figure();
 
 scatter( median(12*log2(MX(:,:,13)/440),1,'omitnan'), median(MX(:,:,14),1,'omitnan'), 'dk', 'filled');
@@ -151,7 +150,7 @@ grid on; box on;
 xlabel('$12 \times log_2 (f_1 /  440 Hz) $', 'interpreter','latex');
 ylabel('$\theta = u_j/f_1 W_m$','interpreter','latex'); ylim([0 12]);
 
-%% Flow conservation for pallet-to-groove
+% Flow conservation for pallet-to-groove
 
 Spall_eff = median(MX(:,:,6),1,'omitnan').*sqrt(median(MX(:,:,21),1,'omitnan'))./sqrt( median(MX(:,:,19),1,'omitnan')-median(MX(:,:,20),1,'omitnan'));
 
@@ -182,7 +181,7 @@ plot(querypoints, polyval(Pallet_pfit2, querypoints), '--k');
 text(0.02,0.7e-4,sprintf('$y=%1.5f x + %1.4f$',Pallet_pfit(1),Pallet_pfit(2) ), 'interpreter','latex');
 
 
-%% Foot flow conservation and Gamma function [OK][Keep, 2025/01/30, plot1/2 venacontracta]
+% Foot flow conservation and Gamma function [OK][Keep, 2025/01/30, plot1/2 venacontracta]
       
 Qin = 1.0*MX(:,:,5) .* sqrt( 2/rho*( MX(:,:,19) - MX(:,:,21) ) );
 Qj  = 1.0*MX(:,:,6).*sqrt( 2/rho * ( MX(:,:,21) -      0     ) );
@@ -199,7 +198,7 @@ ylabel('$\Gamma (\mathcal{S})$','interpreter','latex');
 querypoints = [0:1e-2:1.5];
 plot(querypoints, polyval(FitFlowConserv, querypoints), '--k');
 text(0.8,0.55,sprintf('$y=%1.3f x + %1.3f$',FitFlowConserv(1),FitFlowConserv(2) ), 'interpreter','latex');
-%% Pfoot target versus Sj/Sin [ok][keep][2025/01/30][plot2/2, venacontracta]
+% Pfoot target versus Sj/Sin [ok][keep][2025/01/30][plot2/2, venacontracta]
 
  % [Can we predict PfootTarg just by Sj and Sin?]
  
@@ -259,19 +258,22 @@ end
  % so we have a jet at the entrance dissipated by turbulence
  % and a second at the output....? so?
 
-                        %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %       Transient analysis
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% ===     Characteristic times: repetition of below's (including A, B, C, D)
+% ===     Characteristic times: repetition of below's (including A, B, C, D)
 fax = 12*log2(F1MEAN/440);
 LW = 1.0;
 
 l_pall = 5e-3;
 l_in   = 1e-3;
 l_j    = 1e-3;
+
+Sgrv_eff = median(MX(:,:,3),1,'omitnan')'*0.05;
+
 
 Vgrv = median(MX(:,:,11),1,'omitnan'); Vgrv = Vgrv(:);
 Vf   = median(MX(:,:,2),1, 'omitnan'); Vf = Vf(:);
@@ -284,7 +286,8 @@ Sj            = 1*MX(:,:,6);
     Sj = median(Sj, 1, 'omitnan'); Sj = Sj(:);
 
 
-Spall_max_eff = 1.*Spall_max;
+        Spall_max_eff = 1.*Spall_max;
+Spall_eff = 10.^(  -0.03732*12*log2(F1MEAN/440) - 4.6202 ); % fitted to computed 
 Sin_eff = Sj(:).*sqrt(median(MX(:,:,21),1,'omitnan')'./(median(MX(:,:,19),1,'omitnan')- median(MX(:,:,21),1,'omitnan') )'         );
 Sj_eff = 1.*Sj;
 
@@ -304,6 +307,7 @@ one_over_B = Sin_eff*co2./Vgrv*sqrt(rho/P0);
 % D = Sj_eff*co2./Vgrv*sqrt(rho/P0);
 one_over_C = Sin_eff*co2./Vf*sqrt(rho/P0);
 one_over_D = Sj_eff*co2./Vf*sqrt(rho/P0);
+sigMa = Spall_eff./Sgrv_eff;
 
 
 figure(24); clf;
