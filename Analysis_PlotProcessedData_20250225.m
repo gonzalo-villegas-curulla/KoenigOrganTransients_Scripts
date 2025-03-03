@@ -53,6 +53,8 @@ Spall_Lateral = PalletValveStrokeArea(maskpipes); % At maximum aperture of valve
 
 fax = 12*log2(F1MEAN/440);
 
+%%
+
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %       Geometry
@@ -70,8 +72,8 @@ end
 grid on; box on;
 legend(namevarsall);
 
-figure(); 
-for idx=1:12
+if 0%figure(); 
+% for idx=1:12
     ff = polyfit( 12*log2(F1MEAN/440), log10(median(MX(:,:,idx),1,'omitnan')), 1);
     plot(12*log2(F1MEAN/440), log10(median(MX(:,:,idx),1,'omitnan')) ,'-kd');
     hold on;
@@ -96,16 +98,15 @@ ax=gca; ax.YScale = 'log';
 legend('Lateral PalletValve','Pallet Slot','Tone Hole','Sin','Sj');
 
 % Sections
-
-% Geometrical sections comparison =============0
-figure(22);clf;
-plot(12*log2(F1MEAN/440), log10(Spall_Lateral)   ,'-*');
-hold on;
-plot(12*log2(F1MEAN/440), log10(Sin), '-*');
-plot(12*log2(F1MEAN/440), log10(Sj), '-*');
-legend('S_{pall,lat} (geom)','S_{in}    (geom)','S_j    (geom)');
-box on; grid on; 
-ylim([-6 0]); ylabel('log10');
+            % % Geometrical sections comparison =============0
+            % figure(22);clf;
+            % plot(12*log2(F1MEAN/440), log10(Spall_Lateral)   ,'-*');
+            % hold on;
+            % plot(12*log2(F1MEAN/440), log10(Sin), '-*');
+            % plot(12*log2(F1MEAN/440), log10(Sj), '-*');
+            % legend('S_{pall,lat} (geom)','S_{in}    (geom)','S_j    (geom)');
+            % box on; grid on; 
+            % ylim([-6 0]); ylabel('log10');
 
 
 % Sj / Sin
@@ -286,8 +287,8 @@ Sj            = 1*MX(:,:,6);
     Sj = median(Sj, 1, 'omitnan'); Sj = Sj(:);
 
 
-        Spall_max_eff = 1.*Spall_max;
-Spall_eff = 10.^(  -0.03732*12*log2(F1MEAN/440) - 4.6202 ); % fitted to computed 
+        % Spall_max_eff = 1.*Spall_max;
+Spall_max_eff = 10.^(  -0.03732*12*log2(F1MEAN/440) - 4.6202 ); % fitted to computed 
 Sin_eff = Sj(:).*sqrt(median(MX(:,:,21),1,'omitnan')'./(median(MX(:,:,19),1,'omitnan')- median(MX(:,:,21),1,'omitnan') )'         );
 Sj_eff = 1.*Sj;
 
@@ -307,7 +308,7 @@ one_over_B = Sin_eff*co2./Vgrv*sqrt(rho/P0);
 % D = Sj_eff*co2./Vgrv*sqrt(rho/P0);
 one_over_C = Sin_eff*co2./Vf*sqrt(rho/P0);
 one_over_D = Sj_eff*co2./Vf*sqrt(rho/P0);
-sigMa = Spall_eff./Sgrv_eff;
+sigMa = Spall_eff(:)./Sgrv_eff(:);
 
 
 figure(24); clf;
@@ -316,9 +317,9 @@ hold on;
 plot(fax, median(MX(:,:,56),1,'omitnan') ,'-o', 'linewidth',LW);
 % plot(fax, median(MX(:,:,58),1,'omitnan') , '-o', 'linewidth',LW);
 %
-plot(fax, tau_pall_L, '--s', 'linewidth',LW);
-plot(fax, tau_in_L , '--s', 'linewidth',LW);
-plot(fax, tau_j_L,'--s', 'linewidth',LW);
+% plot(fax, tau_pall_L, '--s', 'linewidth',LW);
+% plot(fax, tau_in_L , '--s', 'linewidth',LW);
+% plot(fax, tau_j_L,'--s', 'linewidth',LW);
 %
 plot(fax, one_over_Amax,'-v', 'linewidth',LW);
 plot(fax, one_over_B,'-v', 'linewidth',LW);
@@ -327,10 +328,67 @@ plot(fax, one_over_B,'-v', 'linewidth',LW);
 plot(fax, one_over_C,'-v', 'linewidth',LW);
 plot(fax, one_over_D,'-v', 'linewidth',LW);
 %
-legend('PRT_{grv}','PRT_f','tau grv (L_{grv})','tau in (L_{in})','tau jet (L_{j})','1/A_{max}','1/B','Vf/(Vgrv*C)','Vf/(Vgrv*D)', 'fontsize',12);
+legend('PRT_{grv}','PRT_f','tau grv (L_{grv})','tau in (L_{in})','tau jet (L_{j})','1/A_{max}','1/B','1/C','1/D', 'fontsize',12);
 ax=gca; ax.YScale = 'log'; grid on;
 xlabel('12log_2(f_1/440)');
                    
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Simulated vs Measured ABCDsigma params 
+
+
+A = 1./one_over_Amax;
+B = 1./one_over_B;
+C = 1./one_over_C;
+D = 1./one_over_D;
+% sigMa = sigMa;
+
+A = A(:); B = B(:); C = C(:); D = D(:); sigMa = sigMa(:);
+PRTgrv = median(MX(:,:,52),1,'omitnan');
+PRTgrv = PRTgrv(:);
+PRTf = median(MX(:,:,56), 1, 'omitnan');
+PRTf = PRTf(:);
+
+pf_over_pgrv = median(MX(:,:,21),1,'omitnan')./median(MX(:,:,20),1,'omitnan');
+pf_over_pgrv = pf_over_pgrv(:);
+%
+figure();
+subplot(121);
+plot(A, 1e3*PRTgrv,'d'); hold on;  plot(A, 1e3*PRTf,'s'); 
+xlabel('A [s]'); ylabel('[ms]'); legend('PRT_{grv}','PRT_{f}'); title('PRT'); grid on; box on;
+subplot(122);
+plot(A, pf_over_pgrv,'v'); xlabel('A [s]');title('Pf/P_{grv}'); grid on; box on; ylim([0 1]);
+%
+figure();
+subplot(121);
+plot(B, 1e3*PRTgrv,'d'); hold on;  plot(B, 1e3*PRTf,'s'); 
+xlabel('B [s]'); ylabel('[ms]'); legend('PRT_{grv}','PRT_{f}'); title('PRT'); grid on; box on;
+subplot(122);
+plot(B, pf_over_pgrv,'v'); xlabel('B [s]');title('Pf/P_{grv}'); grid on; box on; ylim([0 1]);
+%
+figure();
+subplot(121);
+plot(C, 1e3*PRTgrv,'d'); hold on;  plot(C, 1e3*PRTf,'s'); 
+xlabel('C [s]'); ylabel('[ms]'); legend('PRT_{grv}','PRT_{f}'); title('PRT'); grid on; box on;ylim([0 8]);
+subplot(122);
+plot(log10(C), log10(pf_over_pgrv),'v'); xlabel('C [s]');title('Pf/P_{grv}'); grid on; box on; %ylim([0 1]);
+%
+figure();
+subplot(121);
+plot(D, 1e3*PRTgrv,'d'); hold on;  plot(D, 1e3*PRTf,'s'); 
+xlabel('D [s]'); ylabel('[ms]'); legend('PRT_{grv}','PRT_{f}'); title('PRT'); grid on; box on;ylim([0 8]);
+subplot(122);
+plot(log10(D), log10(pf_over_pgrv),'v'); xlabel('D [s]');title('Pf/P_{grv}'); grid on; box on;% ylim([0 1]);
+%
+figure();
+subplot(121);
+plot(sigMa, 1e3*PRTgrv,'d'); hold on;  plot(sigMa, 1e3*PRTf,'s'); 
+xlabel('\Sigma'); ylabel('[ms]'); legend('PRT_{grv}','PRT_{f}'); title('PRT'); grid on; box on;
+subplot(122);
+plot(sigMa, pf_over_pgrv,'v'); xlabel('\Sigma');title('Pf/P_{grv}'); grid on; box on; ylim([0 1]);
+
+
+
+
 
 %% ===     Characteristic times: length, volume, and volume ratio vs. PRT's [potentially yes]
 fax = 12*log2(F1MEAN/440);
@@ -351,7 +409,8 @@ Sj            = 1*MX(:,:,6);
     Sj = median(Sj, 1, 'omitnan'); Sj = Sj(:);
 
 
-Spall_max_eff = 1.*Spall_max;
+% Spall_max_eff = 1.*Spall_max;
+Spall_max_eff = 10.^(  -0.03732*12*log2(F1MEAN/440) - 4.6202 ); % fitted to computed 
 Sin_eff = Sj(:).*sqrt(median(MX(:,:,21),1,'omitnan')'./(median(MX(:,:,19),1,'omitnan')- median(MX(:,:,21),1,'omitnan') )'         );
 Sj_eff = 1.*Sj;
 
