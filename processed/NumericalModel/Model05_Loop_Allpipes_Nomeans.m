@@ -4,7 +4,7 @@ load data_proc.mat
 
 % %%%%%%%%%%%%%%%%   CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
 
-pipelist = [1:22]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
+pipelist = [2,7,14]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
 
 % Pallet valve openig time 
 
@@ -16,7 +16,9 @@ ValveRampEnd  = 0.101;  % [s] T-Finish opening-ramp (DROPIC robot time)
 lower_bound_factor = 0.01; % Lower end of parameter under modification (Def., 0.5x and 2.0x)
 upper_bound_factor = 16.0;
 
-Nsteps = 1000; % Between min and max range of the parameter variation
+Nsteps = 100; % Between min and max range of the parameter variation
+
+flag_means = true;
 
 % %%%%%%%%%%%%%%   END OF CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
 
@@ -160,51 +162,73 @@ for idx = 1 : length(pipelist)
 end
 
 % PARAMETER =====  A ========
-figure(3); clf; 
+figure(1); clf; 
 %
 axhA(1) = subplot(1,3,1); hold on;
 for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Amodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,1)  );
+    plot( 1./(results{idx}.Amodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,1)  );
+end
+if flag_means
+    for idx = 1:length(pipelist)
+        plot( 1./data_proc.one_over_Amax(pipelist(idx)) ,...
+        1e3*interp1(1./(results{idx}.Amodif.vals),results{idx}.results.MX_PRTgrv(:,1),1./data_proc.one_over_Amax(pipelist(idx)), 'pchip'),...
+        'dk');
+    end
 end
 xlabel('A [s]'); ylabel('[ms]'); title('PRTgrv'); grid on; box on;
 legend(lgd);
-%
-axhA(2) = subplot(1,3,2); hold on;
-for idx=1:length(pipelist)
-plot( 1./(results{pipe_loop_idx}.Amodif.vals),  1e3*results{idx}.results.MX_PRTf(:,1)  );
-end
-xlabel('A [s]'); ylabel('[ms]'); title('PRTf');grid on; box on;
-legend(lgd);
-%
+% -----------------------------
+        axhA(2) = subplot(1,3,2); hold on;
+        for idx=1:length(pipelist)
+            plot( 1./(results{idx}.Amodif.vals),  1e3*results{idx}.results.MX_PRTf(:,1)  );
+        end        
+        if flag_means
+             for idx = 1:length(pipelist)
+                plot( 1./data_proc.one_over_Amax(pipelist(idx)) ,...
+                1e3*interp1(1./(results{idx}.Amodif.vals),results{idx}.results.MX_PRTf(:,1),1./data_proc.one_over_Amax(pipelist(idx)), 'pchip'),...
+                'dk');
+             end
+        end
+        xlabel('A [s]'); ylabel('[ms]'); title('PRTf');grid on; box on;
+        legend(lgd);
+% -----------------------------
 axhA(3) = subplot(1,3,3); hold on;
 for idx=1:length(pipelist)
-plot( 1./(results{pipe_loop_idx}.Amodif.vals),  results{idx}.results.MX_Pf_Pgrv(:,1)  );
+    plot( 1./(results{idx}.Amodif.vals),  results{idx}.results.MX_Pf_Pgrv(:,1)  );
 end
+if flag_means
+    for idx = 1:length(pipelist)
+        plot( 1./data_proc.one_over_Amax(pipelist(idx)) ,...
+        1e3*interp1(1./(results{idx}.Amodif.vals),results{idx}.results.MX_Pf_Pgrv(:,1),1./data_proc.one_over_Amax(pipelist(idx)), 'pchip'),...
+        'dk');
+    end
+end
+
 xlabel('A [s]'); title('Pf/Pgrvf Targ'); ylim([0 1]); grid on; box on;
 legend(lgd);
 linkaxes(axhA,'x');
 
 % PARAMETER =====  B ========
-figure(4); clf; 
+figure(2); clf; 
 %
 axhB(1) = subplot(1,3,1); hold on;
 for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Bmodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,2)  );
+    plot( 1./(results{idx}.Bmodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,2)  );
 end
 xlabel('B [s]'); ylabel('[ms]'); title('PRTgrv'); ylim([0 5.5]);
 grid on; box on;
 legend(lgd);
 % -----------------------------
-axhB(2) = subplot(1,3,2); hold on;
-for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Bmodif.vals),  1e3*results{idx}.results.MX_PRTf(:,2)  );
-end
-xlabel('B [s]'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
-legend(lgd);
-%
+        axhB(2) = subplot(1,3,2); hold on;
+        for idx=1:length(pipelist)
+            plot( 1./(results{idx}.Bmodif.vals),  1e3*results{idx}.results.MX_PRTf(:,2)  );
+        end
+        xlabel('B [s]'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
+        legend(lgd);
+% -----------------------------
 axhB(3) = subplot(1,3,3); hold on;
 for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Bmodif.vals),  results{idx}.results.MX_Pf_Pgrv(:,2)  );
+    plot( 1./(results{idx}.Bmodif.vals),  results{idx}.results.MX_Pf_Pgrv(:,2)  );
 end
 xlabel('B [s]'); title('Pf/Pgrv Targ'); grid on; box on; ylim([0 1]);
 legend(lgd);
@@ -214,83 +238,77 @@ linkaxes(axhB,'x');
 
 
 % PARAMETER =====  C ========
-figure(5); clf; 
+figure(3); clf; 
 %
 axhC(1) = subplot(1,3,1); hold on;
 for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Cmodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,3)  );
+    plot( 1./(results{idx}.Cmodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,3)  );
 end
 xlabel('C [s]'); ylabel('[ms]'); title('PRTgrv'); grid on; box on; ylim([0 5.5]);
 legend(lgd);
-
-%
-axhC(2) = subplot(1,3,2); hold on;
-for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Cmodif.vals),  1e3*results{idx}.results.MX_PRTf(:,3)  );
-end
-xlabel('C [s]'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
-legend(lgd);
-
-%
+% -----------------------------
+        axhC(2) = subplot(1,3,2); hold on;
+        for idx=1:length(pipelist)
+            plot( 1./(results{idx}.Cmodif.vals),  1e3*results{idx}.results.MX_PRTf(:,3)  );
+        end
+        xlabel('C [s]'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
+        legend(lgd);
+% -----------------------------
 axhC(3) = subplot(1,3,3); hold on;
 for idx=1:length(pipelist)
-    plot( log10(1./(results{pipe_loop_idx}.Cmodif.vals)),  log10(results{idx}.results.MX_Pf_Pgrv(:,3)  ));
+    plot( 1./(results{idx}.Cmodif.vals),  results{idx}.results.MX_Pf_Pgrv(:,3)  );
 end
-xlabel('C[s] (log_{10})'); title('Pf/Pgrv Targ'); ylabel('(log_{10})'); grid on; box on; xlim([-4 -0.9]);
+xlabel('C[s] (log_{10})'); title('Pf/Pgrv Targ'); ylabel('(log_{10})'); grid on; box on;
 legend(lgd);
 linkaxes(axhC([1,2]),'x');
 
 
 % PARAMETER =====  D ========
-figure(6); clf; 
+figure(4); clf; 
 %
 axhD(1) = subplot(1,3,1); hold on;
 for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Dmodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,4)  );
+    plot( 1./(results{idx}.Dmodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,4)  );
 end
 xlabel('D [s]'); ylabel('[ms]'); title('PRTgrv'); grid on; box on; ylim([0 5.5]);
 legend(lgd);
-
-%
-axhD(2) = subplot(1,3,2); hold on;
-for idx=1:length(pipelist)
-    plot( 1./(results{pipe_loop_idx}.Dmodif.vals),  1e3*results{idx}.results.MX_PRTf(:,4)  );
-end
-xlabel('D[s]'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
-legend(lgd);
-
-%
+% -----------------------------
+        axhD(2) = subplot(1,3,2); hold on;
+        for idx=1:length(pipelist)
+            plot( 1./(results{idx}.Dmodif.vals),  1e3*results{idx}.results.MX_PRTf(:,4)  );
+        end
+        xlabel('D[s]'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
+        legend(lgd);
+% -----------------------------
 axhD(3) = subplot(1,3,3); hold on;
 for idx=1:length(pipelist)
-    plot( log10(1./(results{pipe_loop_idx}.Dmodif.vals)),  log10(results{idx}.results.MX_Pf_Pgrv(:,4))  );
+    plot( 1./(results{idx}.Dmodif.vals),  results{idx}.results.MX_Pf_Pgrv(:,4)  );
 end
-xlabel('D [s] (log_{10})'); ylabel('(log_{10})'); title('Pf/Pgrv Targ'); grid on; box on; xlim([-4,-0.9]);
+xlabel('D [s] (log_{10})'); ylabel('(log_{10})'); title('Pf/Pgrv Targ'); grid on; box on;
 legend(lgd);
 linkaxes(axhD([1,2]),'x');
 
 
 % PARAMETER =====  Sigma ========
-figure(7); clf; 
+figure(5); clf; 
 %
 subplot(1,3,1); hold on;
 for idx=1:length(pipelist)
-    plot( (results{pipe_loop_idx}.Sigmamodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,5)  );
+    plot( (results{idx}.Sigmamodif.vals),  1e3*results{idx}.results.MX_PRTgrv(:,5)  );
 end
 xlabel('\Sigma'); ylabel('[ms]'); title('PRTgrv'); grid on; box on; ylim([0 5.5]);
 legend(lgd);
-
-%
-subplot(1,3,2); hold on;
-for idx=1:length(pipelist)
-    plot( results{pipe_loop_idx}.Sigmamodif.vals,  1e3*results{idx}.results.MX_PRTf(:,5)  );
-end
-xlabel('\Sigma'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
-legend(lgd);
-
-
+% -----------------------------
+        subplot(1,3,2); hold on;
+        for idx=1:length(pipelist)
+            plot( results{idx}.Sigmamodif.vals,  1e3*results{idx}.results.MX_PRTf(:,5)  );
+        end
+        xlabel('\Sigma'); ylabel('[ms]'); title('PRTf'); grid on; box on; ylim([0 5.5]);
+        legend(lgd);
+% -----------------------------
 subplot(1,3,3); hold on;
 for idx=1:length(pipelist)
-    plot( results{pipe_loop_idx}.Sigmamodif.vals,  results{idx}.results.MX_Pf_Pgrv(:,5)  );
+    plot( results{idx}.Sigmamodif.vals,  results{idx}.results.MX_Pf_Pgrv(:,5)  );
 end
 xlabel('\Sigma'); title('Pf/Pgrv Targ'); grid on; box on; ylim([0 1]);
 legend(lgd);
@@ -336,7 +354,7 @@ legend(lgd);
     
     pgrv = yout(:,1);
     pf   = yout(:,2);
-    if max(abs(pgrv))>10  % Parse exp() explosion of solution
+    if max(abs(pf))/max(abs(pgrv))>1  % Parse exp() explosion of solution
         flag_error = 1;
     end
     

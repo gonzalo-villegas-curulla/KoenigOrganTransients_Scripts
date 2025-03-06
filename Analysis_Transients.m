@@ -9,7 +9,7 @@ dt = 1/fs;
     open(videoObj);
 
 files=dir('A*.mat');
-for BIGIDX = 12 :  length(files)  % ==== MAIN LOOP ====
+for BIGIDX = 1 :  length(files)  % ==== MAIN LOOP ====
 
 clc; clearvars -except BIGIDX files videoObj
 
@@ -25,28 +25,6 @@ x = thedata.PR_data.pressureData;
 for idx = 1 : 6
     x(idx,:) = x(idx,:)-mean(x(idx,1:100)); % Correct AUTO-ZERO detection of contidioners
 end
-
-if 1
-    XLIMS = [43 53]+17;
-    mmm = [fix(XLIMS(1)*fs) : fix(XLIMS(2)*fs) ];
-    figure(17); clf;
-    plot(tvec(mmm), x(3,mmm));%./x(2,:));
-    hold on;
-    plot(tvec(mmm), x(4,mmm));%./x(2,:));
-    plot(tvec(mmm), x(5,mmm));%./x(2,:));
-    grid on; xlim(XLIMS);
-    axzh(1) = gca;
-
-    figure(18); clf;
-    plot(tvec(mmm), x(3,mmm)./x(2,mmm));
-    hold on;
-    plot(tvec(mmm), x(4,mmm)./x(2,mmm));
-    plot(tvec(mmm), x(5,mmm)./x(2,mmm));
-    grid on; xlim(XLIMS);
-    axzh(2) = gca;
-    linkaxes(axzh, 'x');
-end
-
 
 % Retrieve key movement for reference indexing
 [KeyDownIdx,KeyUpIdx,KeyMovingTime,DurNotesInS, VelPeakIdxPos,VelPeakIdxNeg] = DetectVelocityPeaks_func(x(6,:),tvec,filename);
@@ -108,9 +86,9 @@ lk_foot_end = lk_foot' + fix(fs*DurNotesInS);
 
 
 % A prediction of transient length to allocate
-LENretro = fix(0.100*fs); % walk back from key onset
-LENpost  = fix(2.2*fs + 0*0.600*fs); % Walk forward from key onset % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< PUT IT BACK TO 0.600f*s
-AvTimeDur  = 0.500; % Transient duration plus headroom
+LENretro  = fix(0.100*fs); % walk back from key onset
+LENpost   = fix(2.2*fs ); % Walk forward from key onset 
+AvTimeDur = 0.500; % Transient duration plus headroom
 
 
                                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -152,9 +130,8 @@ for idx = 1 : length(lk_foot)
         
         
         carefulmask = lk_foot(idx) : lk_foot(idx)+fix(3*fs);
-        ll = fix(length(carefulmask)*0.5): fix(length(carefulmask)*0.75); % Scan only through 50-75% of signal's length (ca. 750ms)
-        carefulmask = carefulmask( ll );
-        
+        ll = fix(length(carefulmask)*0.5): fix(length(carefulmask)*0.75);
+        carefulmask = carefulmask( ll );  % Scan only through 50-75% of signal's length (ca. 750ms)        
         
         % PALLET BOX  /!\  ~~~~~~~~~~~~~~~~~
         PpalletB_targ(idx) = mean(x(2,carefulmask));
@@ -166,8 +143,10 @@ for idx = 1 : length(lk_foot)
         OFFSET              = mean(tmp_gr(1:100));
         tmp_gr              = tmp_gr - OFFSET;
         groove_trans{idx}   = tmp_gr;        
+        % % % % groove_trans{idx}   = tmp_gr./x(2,mask)*PpalletB_targ(idx); % Remove wandering and upscale by Ppallet targ mean (GVC,2025/03/03)
       
         Pgroove_targ(idx)   = mean(x(3, carefulmask ))-OFFSET;        
+        % % % % Pgroove_targ(idx)   = mean( (x(3, carefulmask)-OFFSET)./x(2,carefulmask)*PpalletB_targ(idx) ); % GVC,2025/03/03    
         PGTI                = Pgroove_targ(idx);
 
         t20idx              = find(tmp_gr/PGTI >0.2, 1, 'first');
@@ -188,6 +167,7 @@ for idx = 1 : length(lk_foot)
         foot_trans{idx} = tmp_ft;
         
         Pfoot_targ(idx) = mean(x(4, carefulmask  ))- OFFSET;
+        % % % % Pfoot_targ(idx) = mean( (x(4, carefulmask)-OFFSET)./x(2,carefulmask)*PpalletB_targ(idx)  );
         PFTI = Pfoot_targ(idx); 
 
         t20idx = find(tmp_ft/Pfoot_targ(idx) >0.2, 1, 'first');
@@ -198,15 +178,10 @@ for idx = 1 : length(lk_foot)
         t10foot(idx)   = dt*( find(tmp_ft/PFTI<0.1,1,'last') - LENretro);
         PRT10foot(idx) = dt*( find(tmp_ft/PFTI>0.9,1,'first') - find(tmp_ft/PFTI<0.1,1,'last') );        
         
-                %%% Overshooot ===============
-                list = ['A03','A04','A05','A06','A07','A09','A10','A11','A13','A15','A17','A19','A24','A25',...
+        %%% Overshooot ===============
+        list = ['A03','A04','A05','A06','A07','A09','A10','A11','A13','A15','A17','A19','A24','A25',...
                     'A27','A29','A32','A34','A37','A39','A41','A44'];
                 
-
-                
-        
-
-        
         % RADIATED SOUND/PIPE/MOUTH  /!\  ~~~~~~~~~~~~~~~~~
         
         tmp_wholepipe    = x(5, mask_pipe);
@@ -275,79 +250,79 @@ for idx = 1 : length(lk_foot)
         end
 
         f1(idx) = f1estim;
-        TN = fix(T1estim*fs);
+        TN      = fix(T1estim*fs);
 
         
-       try % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % FOURIER DECOMPOSITION of Prad
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        try
-            fundam = mean(f1,'omitnan');
-        catch
-            error('Could not establish Fundam [Hz] previously. What should I use?');
-        end
-        
-        pipecurr     = pipedatavec{idx};
-        [comp0,COMP] = DecomposeFourier_func(pipecurr, fs, fundam);
-        COMP         = COMP'; % Fourier first pressure components
-
-        try
-            run myenvelopedetection.m
-        catch
-            fprintf(sprintf('Failed to run myenvelopedetection.m in transient number %d\n',idx));
-        end
-        
-
-        Ppipe_targ(idx) = TOTAL_target_amp; % Mouth radiated target pressure
-        PPTI = TOTAL_target_amp;
-        t20idxp         = find( enveltot/PPTI<0.2,1,'last');
-        t80idxp         = find( enveltot/PPTI>0.8,1,'first');
-
-        % t20mouth(idx)   = dt*(t20idxp-LENretro -lk_foot(idx));
-        t20mouth(idx)  = dt*(t20idxp-LENretro );
-        PRT20pipe(idx) = dt*(t80idxp-t20idxp);  
-
-        t10mouth(idx)   = dt*( find(enveltot/PPTI<0.1,1,'last') - LENretro );        
-        PRT10pipe(idx) = dt*( find(enveltot/PPTI>0.9,1,'first') - find(enveltot/PPTI<0.1,1,'last') );
-        
-        % Normalize by their steady-state values
-        Fund     = envel_first/mean(envel_first(mask3));
-        Second   = envel_second/mean(envel_second(mask3));
-        Third    = envel_third/mean(envel_third(mask3));
-        ll = t20idxp:  t80idxp; 
-        try % Area integration of F2/F1@trans and F3/F1@transient
-            Area1(idx) = trapz(dt, Second(ll)-Fund(ll)  ); % equally spaced in time (simplify to dt)
-            Area2(idx) = trapz(dt, Third(ll)-Fund(ll)  );
-        end
-
-
-        % We try to find point-wise descriptors to compare a2 with a1:
-        [a2max_val,a2max_idx]    = max(envel_second(1:length(tmp_ft)));
-        a2targ                   = mean(envel_second(end-fix(50*fs/f1estim): end));
-        A2max_over_A1simult(idx) = envel_second(a2max_idx)/envel_first(a2max_idx);
-        A2max_over_A1target(idx) = a2max_val/mean(envel_first(end-fix(fs*0.500):end),'omitnan');
-        A2max_over_A2target(idx) = a2max_val/target_second; 
-
-        % For transient characterisation after fig6, CFA-Ernoult2016:
-        pf_at_a2max(idx) = tmp_ft(a2max_idx);
-        pm_at_a2max(idx) = pipecurr(a2max_idx);
-        a2max_vec(idx)   = a2max_val;
+       try %  Fourier decomposition of modal pressures in the pipe
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % FOURIER DECOMPOSITION of Prad
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-        % ======================================================
-        % Compute and plot the ratio between a2 and a1 to find the max
-        % between t20_foot and t80_foot, after having smoothed them with
-        % butterworth() filtfilt() with a length of N periods (Def. 5).
-
-        [bbb,aaa]=butter(4, (f1estim/5)/(fs/2));
+            try 
+                fundam = mean(f1,'omitnan');
+            catch
+                error('Could not establish Fundam [Hz] previously. What should I use?');
+            end
+            
+            pipecurr     = pipedatavec{idx};
+            [comp0,COMP] = DecomposeFourier_func(pipecurr, fs, fundam);
+            COMP         = COMP'; % Fourier first pressure components
+    
+            try
+                run myenvelopedetection.m
+            catch
+                fprintf(sprintf('Failed to run myenvelopedetection.m in transient number %d\n',idx));
+            end
+            
+    
+            Ppipe_targ(idx) = TOTAL_target_amp; % Mouth radiated target pressure
+            PPTI = TOTAL_target_amp;
+            t20idxp         = find( enveltot/PPTI<0.2,1,'last');
+            t80idxp         = find( enveltot/PPTI>0.8,1,'first');
+    
+            % t20mouth(idx)   = dt*(t20idxp-LENretro -lk_foot(idx));
+            t20mouth(idx)  = dt*(t20idxp-LENretro );
+            PRT20pipe(idx) = dt*(t80idxp-t20idxp);  
+    
+            t10mouth(idx)   = dt*( find(enveltot/PPTI<0.1,1,'last') - LENretro );        
+            PRT10pipe(idx) = dt*( find(enveltot/PPTI>0.9,1,'first') - find(enveltot/PPTI<0.1,1,'last') );
+            
+            % Normalize by their steady-state values
+            Fund     = envel_first/mean(envel_first(mask3));
+            Second   = envel_second/mean(envel_second(mask3));
+            Third    = envel_third/mean(envel_third(mask3));
+            ll = t20idxp:  t80idxp; 
+            try % Area integration of F2/F1@trans and F3/F1@transient
+                Area1(idx) = trapz(dt, Second(ll)-Fund(ll)  ); % equally spaced in time (simplify to dt)
+                Area2(idx) = trapz(dt, Third(ll)-Fund(ll)  );
+            end
+    
+    
+            % We try to find point-wise descriptors to compare a2 with a1:
+            [a2max_val,a2max_idx]    = max(envel_second(1:length(tmp_ft)));
+            a2targ                   = mean(envel_second(end-fix(50*fs/f1estim): end));
+            A2max_over_A1simult(idx) = envel_second(a2max_idx)/envel_first(a2max_idx);
+            A2max_over_A1target(idx) = a2max_val/mean(envel_first(end-fix(fs*0.500):end),'omitnan');
+            A2max_over_A2target(idx) = a2max_val/target_second; 
+    
+            % For transient characterisation after fig6, CFA-Ernoult2016:
+            pf_at_a2max(idx) = tmp_ft(a2max_idx);
+            pm_at_a2max(idx) = pipecurr(a2max_idx);
+            a2max_vec(idx)   = a2max_val;
         
-        dat1 = filtfilt(bbb,aaa,envel_first);
-        dat2 = filtfilt(bbb,aaa,envel_second);
-        ratio_dats = dat2./dat1;
-
-        max_a2_over_a1(idx) = max(ratio_dats(  t20idxp :  t80idxp+fix(50*PRT20foot(idx)*fs)   ));
-       end % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            % ======================================================
+            % Compute and plot the ratio between a2 and a1 to find the max
+            % between t20_foot and t80_foot, after having smoothed them with
+            % butterworth() filtfilt() with a length of N periods (Def. 5).
+    
+            [bbb,aaa]=butter(4, (f1estim/5)/(fs/2));
+            
+            dat1 = filtfilt(bbb,aaa,envel_first);
+            dat2 = filtfilt(bbb,aaa,envel_second);
+            ratio_dats = dat2./dat1;
+    
+            max_a2_over_a1(idx) = max(ratio_dats(  t20idxp :  t80idxp+fix(50*PRT20foot(idx)*fs)   ));
+       end %  Fourier decomposition of modal pressures in the pipe
        
        
                                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

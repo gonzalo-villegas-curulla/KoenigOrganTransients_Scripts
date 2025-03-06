@@ -66,7 +66,7 @@ maskpipes  = [3,4,5,6,7,9,10,11,13,15,17,19,24,25,27, 29,32, 34,37,39,41,44]';
 
 PalletWinDepth = 1e-3*129.8; %  [m]
 PALLwinAREA    = PalletWinDepth * PW;  % <<Slot>> area covered by the valve [m^2]
-VGROOVE     = PW *0.51*0.05;
+VGROOVE        = PW *0.51*0.05;
 
 PalletValveWidth = PVG(:,2);
 PalletValveVerticalMaxDisplacement = PVG(:,4);

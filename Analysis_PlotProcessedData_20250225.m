@@ -5,9 +5,7 @@ end
 clc, clear;
 addpath('./processed/');
 
-
- run Analysis_PlotProcessedData_Loads.m
-
+run Analysis_PlotProcessedData_Loads.m
 
 % [1]:Lp        [2]:Vf       [3]:PWidth  [4]:ToneHoleDiam  [5]:Inlet 
 % [6]:Sjet      [7]:h        [8]:H       [9]:Wm            [10]:Dpipe        
@@ -52,6 +50,7 @@ Spall_Slot    = median(MX(:,:,3),1,'omitnan')*0.1298; % Perforated rectangles on
 Spall_Lateral = PalletValveStrokeArea(maskpipes); % At maximum aperture of valve, adding areas of a rectangle and two triangles
 
 fax = 12*log2(F1MEAN/440);
+
 
 %%
 
@@ -118,7 +117,7 @@ xlabel('$12log_2(f_1/440)$','interpreter','latex'); box on; grid on; ylim([0 1.5
 
 
 
-                            % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                          % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                             %       Steady-State analysis
                             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -259,7 +258,15 @@ end
  % so we have a jet at the entrance dissipated by turbulence
  % and a second at the output....? so?
 
-                        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% P_0 by tessitura
+figure;
+errorbar(fax,...
+    mean(MX(:,:,19),1,'omitnan'),...
+    std(MX(:,:,19),1,'omitnan'),...
+    '-v');
+xlabel('12log_2(f_1/440)');ylabel('P_0 [Pa]'); grid on; box on;ylim([0 900]);
+
+%%                      % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %       Transient analysis
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -308,7 +315,7 @@ one_over_B = Sin_eff*co2./Vgrv*sqrt(rho/P0);
 % D = Sj_eff*co2./Vgrv*sqrt(rho/P0);
 one_over_C = Sin_eff*co2./Vf*sqrt(rho/P0);
 one_over_D = Sj_eff*co2./Vf*sqrt(rho/P0);
-sigMa = Spall_eff(:)./Sgrv_eff(:);
+sigMa = Spall_max_eff(:)./Sgrv_eff(:);
 
 
 figure(24); clf;
@@ -317,24 +324,31 @@ hold on;
 plot(fax, median(MX(:,:,56),1,'omitnan') ,'-o', 'linewidth',LW);
 % plot(fax, median(MX(:,:,58),1,'omitnan') , '-o', 'linewidth',LW);
 %
-% plot(fax, tau_pall_L, '--s', 'linewidth',LW);
-% plot(fax, tau_in_L , '--s', 'linewidth',LW);
-% plot(fax, tau_j_L,'--s', 'linewidth',LW);
+plot(fax, tau_pall_L, '--s', 'linewidth',LW);
+plot(fax, tau_in_L , '--s', 'linewidth',LW);
+plot(fax, tau_j_L,'--s', 'linewidth',LW);
+%----------
+A = 1./one_over_Amax;
+B = 1./one_over_B;
+C = 1./one_over_C;
+D = 1./one_over_D;
+plot(fax, A,'-v', 'linewidth',LW);
+plot(fax, B,'-v', 'linewidth',LW);
+plot(fax, C,'-v', 'linewidth',LW);
+plot(fax, D,'-v', 'linewidth',LW);
+% plot(fax, one_over_Amax,'-v', 'linewidth',LW);
+% plot(fax, one_over_B,'-v', 'linewidth',LW);
+% % plot(fax, Vf./(Vgrv.*C),'-v', 'linewidth',LW;
+% % plot(fax, Vf./(Vgrv.*D),'-v', 'linewidth',LW);
+% plot(fax, one_over_C,'-v', 'linewidth',LW);
+% plot(fax, one_over_D,'-v', 'linewidth',LW);
 %
-plot(fax, one_over_Amax,'-v', 'linewidth',LW);
-plot(fax, one_over_B,'-v', 'linewidth',LW);
-% plot(fax, Vf./(Vgrv.*C),'-v', 'linewidth',LW;
-% plot(fax, Vf./(Vgrv.*D),'-v', 'linewidth',LW);
-plot(fax, one_over_C,'-v', 'linewidth',LW);
-plot(fax, one_over_D,'-v', 'linewidth',LW);
-%
-legend('PRT_{grv}','PRT_f','tau grv (L_{grv})','tau in (L_{in})','tau jet (L_{j})','1/A_{max}','1/B','1/C','1/D', 'fontsize',12);
+legend('PRT_{grv}','PRT_f','tau grv (L_{grv})','tau in (L_{in})','tau jet (L_{j})','A_{max}','B','C','D', 'fontsize',12);
 ax=gca; ax.YScale = 'log'; grid on;
 xlabel('12log_2(f_1/440)');
                    
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulated vs Measured ABCDsigma params 
-
 
 A = 1./one_over_Amax;
 B = 1./one_over_B;
