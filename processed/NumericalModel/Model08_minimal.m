@@ -46,7 +46,7 @@ for pipe_loop_idx = 1:length(pipelist)
     Zeta = data_proc.C(sample_select)/data_proc.D(sample_select);
     Volrat = data_proc.B(sample_select)/data_proc.C(sample_select);
 
-    Atmp = 0.8*data_proc.PRTgrv_mean(sample_select); % From PRT
+    Atmp = 0.79*data_proc.PRTgrv_mean(sample_select); % From PRT
     
     Btmp = Atmp/Xi;    % = data_proc.B(sample_select)./data_proc.Amax(sample_select)*Atmp;
     Ctmp = Btmp/Volrat;% = data_proc.C(sample_select)./data_proc.B(sample_select)*Btmp;
@@ -76,7 +76,9 @@ end
     %           Plot results
     % ===================================
 
-figure(10); clf;
+figure(10); clf
+
+% [i]
 subplot(2,2,1); % PRTf simul vs meas
 errorbar(...
     1e3*MX_results(:,5),...
@@ -85,8 +87,11 @@ errorbar(...
     'v');
 grid on; xlabel('Simul [ms]'); ylabel('Meas [ms]'); title('PRT_f');
 ylim([0 8]);
+ax=gca;ax.XLim(1)=0;axis equal;
+ax.YLim(1) = 0;
+hold on; plot([0, 10],[0, 10],'-k');
 
-
+% [ii]
 subplot(2,2,2); % PRTgrv
 errorbar(...
     1e3*MX_results(:,4),...
@@ -95,22 +100,34 @@ errorbar(...
     'v');
 grid on; xlabel('Simul [ms]'); ylabel('Meas [ms]'); title('PRT_{grv}');
 ylim([0 8]);
+axis equal;
+ax=gca;ax.XLim(1) = 0;
+hold on; plot([0,8],[0,8],'-k');
 
+% [iii]
+std_ratio = 1./data_proc.Pgrv_mean.^2.*data_proc.Pgrv_std.^2 + ...
+    (data_proc.Pgrv_mean./data_proc.Ppall_mean.^2).^2 .* data_proc.Ppall_std.^2;
+std_ratio = sqrt(std_ratio);
 
 subplot(2,2,3); %Pgrv/Ppall vs simul Pgrv
 errorbar(...
     MX_results(:,2),...
     data_proc.Pgrv_mean./data_proc.Ppall_mean,...
-    0*data_proc.Pgrv_std./data_proc.Ppall_std,...
+    std_ratio,...
     'v');
-grid on; xlabel('P_{grv} simul'); ylabel('P_{grv}/P_{pall} meas'); title('P_{grv} ratio');
+grid on; xlabel('P_{grv} simul'); ylabel('P_{grv}/P_{pall} meas'); title('P_{grv}/P_{pall} ratio');
 xlim([0 1.]);ylim([0 1.]);
+
+% [iv]
+std_ratio = 1./data_proc.Pgrv_mean.^2 .* data_proc.Pf_std.^2 + ...
+    (data_proc.Pf_mean./data_proc.Pgrv_mean.^2).^2.*data_proc.Pgrv_std.^2;
+std_ratio = sqrt(std_ratio);
 
 subplot(2,2,4); % Pf/Pgrv meas vs simul Pf/Pgrv
 errorbar(...
     MX_results(:,3)./MX_results(:,2),...
     data_proc.Pf_mean./data_proc.Pgrv_mean,...
-    data_proc.Pf_std./data_proc.Pgrv_std,...
+    std_ratio,...
     'v');
 grid on; xlabel('Simul P_f/P_{grv}'); ylabel('Meas P_f/P_{grv}'); title('P_f/P_{grv} ratio');
 hold on;
@@ -124,7 +141,7 @@ fax = 12*log2(data_proc.F1/440);
 
 figure(11); clf;
 
-% [A]
+% [i]
 subplot(2,2,2); % PRTf simul vs meas
 errorbar(fax, ...
     1e3*data_proc.PRTf_mean,...
@@ -141,7 +158,7 @@ xlabel('12log_2(F_1/440)');
 ylabel('[ms]');
 legend('Meas','Simul');
 
-% [B]
+% [ii]
 subplot(2,2,1); % PRTgrv
 errorbar(...
     fax,...
@@ -159,26 +176,34 @@ ylabel('[ms]');
 legend('Meas','Simul');
 
 
-% [C]
+% [iii]
+
+std_ratio = 1./data_proc.Pgrv_mean.^2 .* data_proc.Pgrv_std.^2 + ...
+    (data_proc.Pgrv_mean./data_proc.Ppall_mean.^2).^2.*data_proc.Ppall_std.^2;
+std_ratio = sqrt(std_ratio);
 subplot(2,2,3); %Pgrv/Ppall vs simul Pgrv
 errorbar(...
     fax,...
     data_proc.Pgrv_mean./data_proc.Ppall_mean,...
-    0*data_proc.Pgrv_std./data_proc.Ppall_std,...
+    std_ratio,... 
     'v');
 hold on;
 plot(fax, MX_results(:,2));
-grid on;  title('P_{grv} ratio');
+grid on;  title('P_{grv}/P_{pall} ratio');
 xlabel('12log_2(F_1/440)');
 legend('Meas','Simul');
 ylim([0.8 1]);
 
+% [iv]
+std_rat = (1./data_proc.Pgrv_mean).^2.*data_proc.Pf_std.^2 +...
+    (data_proc.Pf_mean./data_proc.Pgrv_mean.^2).^2.*data_proc.Pgrv_std.^2;
+std_rat = sqrt(std_rat);
 
 subplot(2,2,4); % Pf/Pgrv meas vs simul Pf/Pgrv
 errorbar(...
     fax,...
     data_proc.Pf_mean./data_proc.Pgrv_mean,...
-    data_proc.Pf_std./data_proc.Pgrv_std,...
+    std_rat,...
     'v');
 hold on;
 plot(fax, MX_results(:,3)./MX_results(:,2))

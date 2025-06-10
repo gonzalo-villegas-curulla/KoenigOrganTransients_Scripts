@@ -11,7 +11,8 @@ ValveRampInit = 0.100; % [s] T-Start opening-ramp pallet valve
 % % ValveRampEnd_vec = ValveRampInit + 1e-3*[0.1,0.2,0.3,0.5,1,2,3,5,6,8,10,12,14,18,22,30,40,50];
 % % ValveRampEnd_vec = ValveRampInit + 1e-3*[0.005:0.005:6];
 ValveRampEnd_vec = ValveRampInit + 1e-3 + 1e-3*[-0.9 :0.05: 2.5] ;
-ValveRampEnd_vec = ValveRampInit + 1e-3*[0.8*30 : 0.5 : 1.2*30] ;
+ValveRampEnd_vec = ValveRampInit + 1e-3 + 1e-3*[0.5*30 : 0.5 : 1.2*30] ;
+% ValveRampEnd_vec = ValveRampInit + 1e-3*300;
 
 % ========= Physical constants =======
 rho = 1.2;
@@ -20,7 +21,7 @@ co  = 340;          co2 = co^2;
 % ======= Simulation parameters ==============
 fs   = 4*51.2e3; 
 dt   = 1/fs;
-Tend = 0.300;
+Tend = 3.300;
 tvec = [0:dt:Tend]';
 
 
@@ -155,16 +156,23 @@ function     [PRTgrv,PRTf,pf_over_pgrv_targ,Pgrv_trg, Pf_trg, flag_error] = run_
             pf_over_pgrv_targ = pf(end)/pgrv(end);
             Pgrv_trg = pgrv(end);
             Pf_trg   = pf(end);
+            
         
             if 0 % Plot on the all all time integrations
+
                         figure(20);clf;
                         LW = 1.5;
-                        plot(t_ode*1e3, yout(:,1),'linewidth',LW);
+                        plot(t_ode*1e3, yout(:,1)/yout(end,1),'linewidth',LW);
                         hold on; grid on;
-                        plot(t_ode*1e3, yout(:,2),'linewidth',LW);
+                        plot(t_ode*1e3, yout(:,2)/yout(end,2),'linewidth',LW);
                         
+                        tsegment = tvec(tvec>ValveRampInit & tvec<ValveRampEnd);
+                        plot(1e3*tsegment, omega_func(tsegment, ValveRampInit, ValveRampEnd) , 'g');
+                        plot( 1e3*tvec(tvec>ValveRampEnd), ones(length(tvec(tvec>ValveRampEnd)),1), 'g');
+
+
                         % xlim([0.98*t10grv 1.02*t90f]*1e3);  
-                        xlim([100, 120]);
+                        % xlim([100, 120]);
                         ylim([-0.125 1.1]);
                         title(sprintf('A: %1.2f, B: %1.2f',1e3*PASS_Amax, 1e3*PASS_B));
                         drawnow();
@@ -199,7 +207,7 @@ function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
     if     t_ode<=ValveRampInit
         OM = 0.0;
     elseif ValveRampEnd<t_ode
-        OM = 1.0;        
+        OM = 1.0;       
     else
         OM = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
     end      
