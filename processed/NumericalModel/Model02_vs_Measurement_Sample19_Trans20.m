@@ -233,7 +233,7 @@ catch
     opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Events',@events1,'Events',@events2,'Refine',refine);
     %%% opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Events',@events1,'Refine',refine,'OutputFcn',@odetpbar);
 end
-
+opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Events',@events1,'Events',@events2,'Refine',refine);
 
 tsimul  = tstart;
 yout  = y0;

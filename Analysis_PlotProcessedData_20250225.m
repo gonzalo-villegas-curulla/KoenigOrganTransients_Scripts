@@ -480,6 +480,49 @@ ax=gca; ax.YScale = 'log'; grid on;
 xlabel('12log_2(f_1/440)');
 
 
+
+%% testing A, B, C, D eigs
+
+M = zeros(2,2,22);
+eigmax = zeros(22,1);
+eigmin = zeros(22,1);
+for idx = 1:22
+    M(:,:,idx) = [A(idx), B(idx); C(idx), D(idx)];
+    tmp = eigs(M(:,:,idx));
+    eigmax(idx) = tmp(1);
+    eigmin(idx) = tmp(2);
+end
+
+figure();
+% plot(A*1e3, 1e3*eigmax);
+plot(1e3*eigmax, A*1e3 , 'o');
+hold on;
+plot(PRTf*1e3, A*1e3, 'o');
+plot(PRTf*1e3, eigmax*1e3, 'o');
+
+plot([0 20],[0 20],'-k');
+grid on; axis equal;
+%%
+figure();
+subplot(211);
+plot(A*1e3);
+hold on;
+plot(eigmax*1e3);
+grid on;
+subplot(212);
+plot(A./eigmax); grid on;
+%%
+figure(31); hold on;
+plot(eigmax);
+plot(A);
+plot(B);
+plot(C);
+plot(D);
+plot(PRTf);
+ax=gca; ax.YScale = 'log'; grid on; box on;
+legend('eigmax','A','B','C','D', 'PRTf');
+
+
             %% PRTgrv vs Vgrv, PRTf vs Vf [NO]
             figure();
             %

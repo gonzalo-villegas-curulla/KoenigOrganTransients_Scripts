@@ -22,7 +22,7 @@ co  = 340;          co2 = co^2;
 P0  = 820;
 
 % ======= Simulation parameters ==============
-fs   = 51.2e3; 
+fs   = 51.2e2; 
 dt   = 1/fs;
 Tend = 0.250;
 tvec = [0:dt:Tend]';
@@ -122,7 +122,7 @@ end
 %   23, 23s
 %   avoid 45 (non-adapted time-step)
 
-[t_ode,y] = ode45(@(t_ode,y)...
+[t_ode,y] = ode113(@(t_ode,y)...
     solverA(t_ode, y,one_over_A,one_over_B,one_over_C,one_over_D,sig_full, ValveRampInit, ValveRampEnd),...
     [tstart tfinal], y(2,:), opts); 
 
@@ -179,7 +179,9 @@ for idx = 1 : length(tax)
     elseif ValveRampEnd<Tnow
         Fact = 1.0;        
     else
-        Fact = 0.5 + 0.5*sin(pi*(Tnow-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+%         Fact = 0.5 + 0.5*sin(pi*(Tnow-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+        Fact = (Tnow-ValveRampInit)/(ValveRampEnd-ValveRampInit);
+%         fprintf('Using a ramp Omega(t) ');
     end     
     ramp(idx) = Fact;
 end
@@ -203,7 +205,7 @@ At_factor = one_over_At_val_func(t_ode, ValveRampInit, ValveRampEnd);
 
 one_over_A_time = At_factor*one_over_A;
 
-disp(At_factor)
+%disp(At_factor)
 sig_time = sig_full*At_factor;
 
 
@@ -222,7 +224,9 @@ function At_fact = one_over_At_val_func(t_ode, ValveRampInit, ValveRampEnd)
     elseif ValveRampEnd<t_ode
         At_fact = 1.0;        
     else
-        At_fact = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+%         At_fact = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+        At_fact = (t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit);
+        fprintf('Using a ramp ');
     end      
 
 end

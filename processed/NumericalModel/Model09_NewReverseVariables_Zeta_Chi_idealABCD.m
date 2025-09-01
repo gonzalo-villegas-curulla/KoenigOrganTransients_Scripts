@@ -30,7 +30,7 @@ res_PRTf     = zeros(length(pipelist), 1);
 Ares = [];
 Bres = [];
 
-% Per form simulation ==================================
+% Perform simulation ==================================
 for PLidx = 1:length(pipelist) 
 
     sample_select = pipelist(PLidx);

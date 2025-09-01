@@ -151,7 +151,7 @@ plot( fax,...
     1e3*MX_results(:,5) );
 xlabel('12log_2(F_1/440)');
 ylabel('[ms]');
-legend('Meas','Simul');
+legend('Meas','Simul','location', 'best');
 
 % [B]
 subplot(2,2,2); % PRTgrv
@@ -168,7 +168,7 @@ hold on;
 plot(fax, 1e3*MX_results(:,4) );
 xlabel('12log_2(F_1/440)');
 ylabel('[ms]');
-legend('Meas','Simul');
+legend('Meas','Simul', 'location','best');
 
 
 % [C]
@@ -186,8 +186,8 @@ hold on;
 plot(fax, MX_results(:,2));
 grid on;  title('P_{grv}/P_0 ratio');
 xlabel('12log_2(F_1/440)');
-legend('Meas','Simul');
-ylim([0.8 1]);
+legend('Meas','Simul','location','best');
+ylim([0.6 1.0]);
 
 
 subplot(2,2,4); % Pf/Pgrv meas vs simul Pf/Pgrv
@@ -199,19 +199,89 @@ std_rat = sqrt(std_rat);
 
 errorbar(...
     fax,...
-    data_proc.Pf_mean./data_proc.Pgrv_mean,...
+    data_proc.Pf_mean./data_proc.Pgrv_mean,...    
     std_rat,...
     'v');
 hold on;
 plot(fax, MX_results(:,3)./MX_results(:,2))
+ylim([0 1]);
 
-xlabel('12log_2(F_1/440)'); legend('Meas','Simul');
+xlabel('12log_2(F_1/440)'); legend('Meas','Simul', 'location','best');
 grid on;
 title('P_f/P_{grv} ratio');
 
+% ===========================
+OM = 1.00;
+
+A = data_proc.Amax;
+B = data_proc.B;
+C = data_proc.C;
+D = data_proc.D;
+
+r = 0.5*( -1./C.^3 - 9*OM./(2*A.*C) + 27*(A.*C + B.*D*OM)./(2*A.*B.*C.*D) ) + ...
+    0.5 * sqrt(  -4*(1./C.^2 + 3*OM./A).^3  + (-2./C.^3 - 9*OM./(A.*C)  +27*(A.*C + B.*D*OM)./(A.*B.*C.*D)  ).^2  )   ;
+
+
+r3 = roots([-1 0 0 r(1)]);
+
+r3 = []; r4 = []; r5 = [];
+
+for idx = 1 : pipe_loop_idx
+    tmp = roots([-1 0 0 r(idx)]);
+    r3 = [r3; tmp(1)];
+    r4 = [r4; tmp(2)];
+    r5 = [r5; tmp(3)];
+end
+
+lambda1 = zeros(pipe_loop_idx,1);
+lambda2 = ones(pipe_loop_idx,1);
+lambda3 = -(1./C.^2 + 3*OM./A)./(3*r3) - r3/3 + 1./(3*C);
+lambda4 = -(1./C.^2 + 3*OM./A)./(3*r4) - r4/3 + 1./(3*C);
+lambda5 = -(1./C.^2 + 3*OM./A)./(3*r5) - r5/3 + 1./(3*C);
+
+vari = data_proc.PRTf_mean'*1e3;
+varib = flipud(MX_results(:,5))*1e3;
+
+figure(18);clf; 
+
+
+axh(1)=subplot(211); hold on; grid on; box on; title(sprintf('Re(V.P. 3,4,5) Omega = %1.2f',OM), 'interpreter','latex');
+
+plot(vari,real(lambda3),   'o','color','black','markerfacecolor','none');
+plot(varib, real(lambda3), 'o','color','black','markerfacecolor','black');
+
+plot(vari,real(lambda4),'s', 'color','k', 'markerfacecolor','none');
+plot(varib,real(lambda4),'s', 'color','k', 'markerfacecolor','k');
+
+plot(vari,real(lambda5),'>','color','k', 'markerfacecolor','none');
+plot(varib,real(lambda5),'>','color','k', 'markerfacecolor','k');
+
+%legend('\lambda_3, PRT meas','\lambda_3, PRT simul','\lambda_4, PRT meas','\lambda_4, PRT simul','\lambda_5, PRT meas','\lambda_5, PRT simul');
+xlabel('PRT [ms]');
+
+
+axh(2)=subplot(212); hold on; grid on; box on;
+
+plot(vari,  imag(lambda3), 'o', 'color','k','markerfacecolor','none');
+plot(varib, imag(lambda3), 'o', 'color','k','markerfacecolor','k');
+
+plot(vari,  imag(lambda4),'s', 'color','k','markerfacecolor','none');
+plot(varib, imag(lambda4), 's', 'color','k','markerfacecolor','k');
+
+plot(vari,  imag(lambda5), '>', 'color','k','markerfacecolor','none');
+plot(varib, imag(lambda5), '>', 'color','k','markerfacecolor','k');
+
+%legend('\lambda_3,PRT meas','\lambda_3, PRT simul','\lambda_4, PRT meas','\lambda_4, PRT simul','\lambda_5, PRT meas','\lambda_5, PRT simul');
+title(sprintf('Imag(V.P. 3,4,5)'),'interpreter','latex');
+xlabel('PRT [ms]');
+
+linkaxes(axh,'x');
+xlim([1,11]);
 
 
 
+
+%
 
 % =====================================================================================================================
 % =====================================================================================================================
@@ -330,7 +400,8 @@ function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
     elseif ValveRampEnd<t_ode
         OM = 1.0;        
     else
-        OM = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+        %OM = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+        OM = (t_ode - ValveRampInit)/(ValveRampEnd-ValveRampInit);
     end      
 
 end

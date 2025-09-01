@@ -27,7 +27,11 @@
 % wavelet toolbox and system identification toolbox.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clc, clear; fprintf('Starting script...\n');
-cd '/media/organ/ExtremeSSD/OrganPipe2023-2024/DataTransients/processed/NumModel'
+try
+cd '/media/organ/ExtremeSSD/OrganPipe2023-2024/DataTransients/processed/NumericalModel'
+catch
+% cd '/media/organ/ExtremeSSD/OrganPipe2023-2024/DataTransients/processed/NumericalModel'
+end
 
 
 PIPENUM = 13; TRANSNUM  = 10; 
@@ -231,6 +235,7 @@ catch
     opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Events',@events1,'Events',@events2,'Refine',refine);
     %%% opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Events',@events1,'Refine',refine,'OutputFcn',@odetpbar);
 end
+opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Events',@events1,'Events',@events2,'Refine',refine);
 
 
 tsimul  = tstart;

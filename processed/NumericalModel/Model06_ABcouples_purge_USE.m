@@ -101,14 +101,14 @@ for idx = 1 : length(results{1}.results.MX_PRTgrv)
     MXtmp = zeros(size(results{1}.results.MX_PRTgrv));
     MXtmp(idx,:) = results{1}.results.MX_PRTgrv(idx,:);
     MXtmp(:,idx) = results{1}.results.MX_PRTgrv(:,idx);
-    [aaa,bbb] = max(MXtmp,[],'all','omitnan');
+    [aaa,bbb] = max(MXtmp,[],'all','omitnan', 'linear');
     wheremaxgrv(idx) = bbb(end);
 end
 for idx = 1 : length(results{1}.results.MX_PRTf)
     MXtmp = zeros(size(results{1}.results.MX_PRTf));
     MXtmp(idx,:) = results{1}.results.MX_PRTf(idx,:);
     MXtmp(:,idx) = results{1}.results.MX_PRTf(:,idx);
-    [aaa,bbb] = max(MXtmp,[],'all','omitnan');
+    [aaa,bbb] = max(MXtmp,[],'all','omitnan','linear');
     wheremaxf(idx) = bbb(end);
 end
 [AA,BB] = meshgrid(1e3*results{1}.Amodif.vals, 1e3*results{1}.Bmodif.vals);
@@ -175,7 +175,7 @@ xlabel('sample pipe num'); ylabel('[ms]'); title('A and B across tessitura'); le
 PRTf_lin       = results{1}.results.MX_PRTf(:);
 PRTgrv_lin     = results{1}.results.MX_PRTgrv(:);
 PRT_f_over_grv = PRTf_lin ./ PRTgrv_lin;
-mask  = ~isnan(PRT_f_over_grv);
+mask           = ~isnan(PRT_f_over_grv);
 PRT_f_over_grv = PRT_f_over_grv(mask);
 BB_mask        = BB(:);
 BB_mask        = BB_mask(mask);
@@ -190,6 +190,8 @@ pfit = polyfit(  1./BB_mask, 1./PRT_f_over_grv, 1);
 plot( BB_mask, 1./polyval(pfit,1./BB_mask), '-k');
 
 xlabel('B [ms]'); ylabel('PRT_f/PRT_{grv}'); title('PRT_f/PRT_{grv} w.r.t. B');
+
+
 
 
 % =====================================================================================================================

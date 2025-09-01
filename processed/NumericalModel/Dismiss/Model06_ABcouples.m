@@ -91,7 +91,7 @@ end
 fprintf('Simulation took %1.3f\n',toc(tinit));
 
 
-    % ===================================
+%%   % ===================================
     %           Plot results
     % ===================================
 
@@ -99,17 +99,19 @@ for idx = 1 : length(results{1}.results.MX_PRTgrv)
     MXtmp = zeros(size(results{1}.results.MX_PRTgrv));
     MXtmp(idx,:) = results{1}.results.MX_PRTgrv(idx,:);
     MXtmp(:,idx) = results{1}.results.MX_PRTgrv(:,idx);
-    [aaa,bbb] = max(MXtmp,[],'all','omitnan');
+    [aaa,bbb] = max(MXtmp,[],'all','omitnan', 'linear');
     wheremaxgrv(idx) = bbb(end);
 end
 for idx = 1 : length(results{1}.results.MX_PRTf)
     MXtmp = zeros(size(results{1}.results.MX_PRTf));
     MXtmp(idx,:) = results{1}.results.MX_PRTf(idx,:);
     MXtmp(:,idx) = results{1}.results.MX_PRTf(:,idx);
-    [aaa,bbb] = max(MXtmp,[],'all','omitnan');
+    [aaa,bbb] = max(MXtmp,[],'all','omitnan', 'linear');
     wheremaxf(idx) = bbb(end);
 end
+
 [AA,BB] = meshgrid(1e3*results{1}.Amodif.vals, 1e3*results{1}.Bmodif.vals);
+
 
 % SLOPE PRTgrv max / A=B
 mask_unique = 1:length(unique(BB(wheremaxgrv)));
@@ -177,6 +179,7 @@ ylabel('PRT_f/PRT_{grv}');
     
     
     subplot(122);
+    
     imagesc(1e3*results{1}.Amodif.vals, 1e3*results{1}.Bmodif.vals, 1e3*results{1}.results.MX_PRTf); ax=gca; ax.YDir = 'normal';
     xlabel('A [ms]'); ylabel('B [ms]'); 
     title(sprintf('PRTf [ms]. Slope: %1.3f',median(slopemaxf)));
@@ -185,7 +188,9 @@ ylabel('PRT_f/PRT_{grv}');
     plot(1e3*[LOWER,UPPER],1e3*[LOWER,UPPER], 'r', 'linewidth', 2);
     plot(AA(wheremaxf), BB(wheremaxf), 'om');
     ylim(1e3*[LOWER,UPPER]);
+    
     figure(2); clf; 
+    
     subplot(121);
     imagesc(1e3*results{1}.Amodif.vals, 1e3*results{1}.Bmodif.vals, 1e3*results{1}.results.MX_PRTgrv ); ax=gca; ax.YDir = 'normal';
     xlabel('A [ms]'); ylabel('B [ms]'); 
@@ -197,7 +202,7 @@ ylabel('PRT_f/PRT_{grv}');
     ylim(1e3*[LOWER,UPPER]);
     %
     subplot(122);
-%%
+%% [NO]
 figure();
     plot( min( results{1}.Amodif.vals(:), results{1}.Bmodif.vals(:) ) ,...
         results{1}.results.MX_PRTf(:), '.');
@@ -205,7 +210,7 @@ figure();
     % plot( min(1e3*results{1}.Amodif.vals,1e3*results{1}.Bmodif.vals),...
     %     results{1}.results.MX_PRTgrv(:), '.');
     legend();
-%%
+%% [NO]
 
 
     % xlabel('A [ms]'); ylabel('B [ms]'); 
@@ -229,11 +234,10 @@ figure();
 plot( BB(:), ...
     exp(results{1}.results.MX_PRTf(:)./results{1}.results.MX_PRTgrv(:)) ,...
     '.');
-%%
 
 
 
-%%
+%% [NO]
 figure(10);clf;
 subplot(2,2,1);
 plot( min(AA(:), BB(:)), ...
@@ -289,19 +293,18 @@ ylim(YLIMS);
 % figure(11); clf;
 % surf( 1e3*AA, 1e3*BB, 1e3*results{1}.results.MX_PRTgrv, 'linestyle',  'none');
 
-%%
-
+%% [NO]
 
 figure();
 
 plot(results{1}.results.MX_PRTgrv(:), ...
     results{1}.results.MX_PRTf(:));
-%%
+%% [NO]
 figure();
 plot( results{1}.results.MX_PRTgrv(:),  ...
     (results{1}.results.MX_PRTgrv(:)-results{1}.results.MX_PRTf(:)  ) , 'o');
 
-%%
+%% [NO]
 figure();
 
 plot( results{1}.results.MX_PRTf(:),  ...
