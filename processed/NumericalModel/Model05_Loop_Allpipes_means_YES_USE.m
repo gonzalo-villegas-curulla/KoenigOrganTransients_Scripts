@@ -64,7 +64,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
    
 
     for IDX = 1:Nsteps
-        % Run variation of A on pipe pipelist(pipe_loop_idx)
+        % Run variation of A on pipe pipelist(pipe_loop_idx) % ================================
         [PRTgrv,PRTf,pf_over_pgrv_targ, flag_error] = run_simulation( ...
                             results{pipe_loop_idx}.Amodif.vals(IDX) ,...
                             data_proc.B(sample_select) ,...
@@ -81,7 +81,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
             MX_PRTf(IDX,1)    = PRTf;
             MX_Pf_Pgrv(IDX,1) = pf_over_pgrv_targ;
         end
-        % Run variation of B        
+        % Run variation of B        % ================================% ================================
         [PRTgrv,PRTf,pf_over_pgrv_targ, flag_error] = run_simulation(...
                         data_proc.Amax(sample_select),...
                         results{pipe_loop_idx}.Bmodif.vals(IDX),...
@@ -98,7 +98,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
             MX_PRTf(IDX,2)    = PRTf;
             MX_Pf_Pgrv(IDX,2) = pf_over_pgrv_targ;
         end
-        % Run variation of C
+        % Run variation of C % ================================% ================================
         [PRTgrv,PRTf,pf_over_pgrv_targ, flag_error] = run_simulation(...
                 data_proc.Amax(sample_select),...
                 data_proc.B(sample_select),...
@@ -115,7 +115,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
             MX_PRTf(IDX,3)    = PRTf;
             MX_Pf_Pgrv(IDX,3) = pf_over_pgrv_targ;
         end
-        % Run variation of D
+        % Run variation of D % ================================% ================================
         [PRTgrv,PRTf,pf_over_pgrv_targ, flag_error] = run_simulation(...
                 data_proc.Amax(sample_select),...
                 data_proc.B(sample_select),...
@@ -132,7 +132,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
             MX_PRTf(IDX,4)    = PRTf;
             MX_Pf_Pgrv(IDX,4) = pf_over_pgrv_targ;
         end
-        % Run variation of Sigma
+        % Run variation of Sigma % ================================% ================================
         [PRTgrv,PRTf,pf_over_pgrv_targ, flag_error] = run_simulation(...
                     data_proc.Amax(sample_select),...
                     data_proc.B(sample_select),...
@@ -151,6 +151,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
         end
         %
     end 
+    
     % Save ABCDsigma variational results for pipe pipelist(pipe_loop_idx)
     results{pipe_loop_idx}.results.MX_PRTgrv  = MX_PRTgrv;
     results{pipe_loop_idx}.results.MX_PRTf    = MX_PRTf;

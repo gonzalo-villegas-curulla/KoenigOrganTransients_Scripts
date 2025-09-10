@@ -173,13 +173,14 @@ figure(1);clf;
 plot(tsimul*1e3, yout(:,1),'linewidth',LW);
 hold on;
 plot(tsimul*1e3, yout(:,2),'linewidth',LW);
-ylim([-2.5 1.1]);
-legend('Pgrv','Pf','fontsize',14);
+ylim([-0.5 1.1]);
+legend('P_{grv}/P_0','P_f/P_0','fontsize',14);
 grid on;
 ylabel('Normalized pressure','fontsize', FSZ);
 xlabel('Time [ms]', 'FontSize', FSZ);
 
-figure; heatmap([one_over_A,one_over_B;one_over_C,one_over_D]);
+figure(2);clf; 
+heatmap([one_over_A,one_over_B;one_over_C,one_over_D]);
 
 % ==================================
 %            FUNCTIONS 

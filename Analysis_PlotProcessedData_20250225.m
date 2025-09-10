@@ -287,7 +287,7 @@ Vgrv = median(MX(:,:,11),1,'omitnan'); Vgrv = Vgrv(:);
 Vf   = median(MX(:,:,2),1, 'omitnan'); Vf = Vf(:);
 
 Spall_max = PalletValveStrokeArea(maskpipes);
-    Spall_max = Spall_max(:); Spall_max = Spall_max(:);
+    Spall_max = Spall_max(:); 
 Sin           = MX(:,:,5);
     Sin = median(Sin, 1, 'omitnan'); Sin = Sin(:);
 Sj            = 1*MX(:,:,6);
@@ -310,7 +310,7 @@ tau_j_V    = Vgrv./(Sj_eff*co2)*sqrt(P0/rho);
 Vf_over_Vgrv = Vf./Vgrv;
 
 one_over_Amax = Spall_max_eff*co2./Vgrv*sqrt(rho/P0);
-one_over_B = Sin_eff*co2./Vgrv*sqrt(rho/P0);
+one_over_B    = Sin_eff*co2./Vgrv*sqrt(rho/P0);
 % C = Sin_eff*co2./Vgrv*sqrt(rho/P0);
 % D = Sj_eff*co2./Vgrv*sqrt(rho/P0);
 one_over_C = Sin_eff*co2./Vf*sqrt(rho/P0);
@@ -346,6 +346,29 @@ plot(fax, D,'-v', 'linewidth',LW);
 legend('PRT_{grv}','PRT_f','tau grv (L_{grv})','tau in (L_{in})','tau jet (L_{j})','A_{max}','B','C','D', 'fontsize',12);
 ax=gca; ax.YScale = 'log'; grid on;
 xlabel('12log_2(f_1/440)');
+
+
+%%
+% Fig4 A
+figure();
+plot(Sin./PalletValveStrokeArea(maskpipes),...
+    A./B,...
+    'dk', 'markerfacecolor','k');
+ylabel('A/B');
+xlabel('S^{geo}_{in}/S^{geo}_{pall}');
+grid on; ylim([0 0.55]);xlim([0 0.07]);
+
+
+%%
+% Fig4B
+figure();
+plot(Sj./Sin,...
+    C./D,...
+    'sk','markerfacecolor','k');
+grid on; 
+ylim([0 1.8]);ylabel('C/D');
+xlim([0 1.4]);xlabel('S^{geo}_j/S^{geo}_{in}');
+
                    
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Simulated vs Measured ABCDsigma params 

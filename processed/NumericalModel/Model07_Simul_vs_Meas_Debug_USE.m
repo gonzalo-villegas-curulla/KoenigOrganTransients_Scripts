@@ -148,7 +148,7 @@ title('PRT_f');
 % ylim([0 8]);
 hold on;
 plot( fax,...
-    1e3*MX_results(:,5) );
+    flipud(1e3*MX_results(:,5)) );
 xlabel('12log_2(F_1/440)');
 ylabel('[ms]');
 legend('Meas','Simul');
@@ -165,7 +165,7 @@ grid on;
 title('PRT_{grv}');
 % ylim([0 8]);
 hold on;
-plot(fax, 1e3*MX_results(:,4) );
+plot(fax, flipud(1e3*MX_results(:,4)) );
 xlabel('12log_2(F_1/440)');
 ylabel('[ms]');
 legend('Meas','Simul');

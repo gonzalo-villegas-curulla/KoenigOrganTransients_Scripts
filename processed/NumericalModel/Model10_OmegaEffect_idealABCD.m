@@ -2,7 +2,7 @@ clc, clear;
 
 load data_proc.mat
 
-pipelist = [8]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
+pipelist = [8]; %Def 8 % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
 
 % Pallet valve openig time 
 ValveRampInit = 0.100; % [s] T-Start opening-ramp pallet valve

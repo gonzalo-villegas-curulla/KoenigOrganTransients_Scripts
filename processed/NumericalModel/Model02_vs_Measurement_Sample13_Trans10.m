@@ -391,28 +391,30 @@ linkaxes(ax,'x');
 xlim([0 Tend]);
 
 
-%%
+% =========================================================================
 FSZ = 14;
-figure(1); clf;
+figure(2); clf;
 ax(1) = subplot(511);
 plot(tsimul, u3, '-o');
-grid on; box on; ylabel('FLOW Pallet','fontsize',FSZ);
+grid on; box on; ylabel('U Pallet','fontsize',FSZ);
 yyaxis right;
 plot(tmeas, S3vec,'r');ylabel('Valve area','fontsize',FSZ);
 %
 ax(2) = subplot(512);
-plot(tsimul, p3, '-o');
-grid on; box on; ylabel('PRESS. Groove','fontsize',FSZ);
+% plot(tsimul, p3, '-o');
+plot(tmeas, p3, '-o');
+grid on; box on; ylabel('P Groove','fontsize',FSZ);
 %
 ax(3) = subplot(513);
 plot(tsimul, u4, '-o');
-grid on; box on; ylabel('FLOW Foot IN','fontsize',FSZ);
+grid on; box on; ylabel('U Foot IN','fontsize',FSZ);
 %
 ax(4) = subplot(514);
-plot(tsimul, p4, '-o');
+% plot(tsimul, p4, '-o');
+plot(tmeas, p4, '-o');
 hold on;
-plot(tsimul, fittedPfoot);
-grid on; box on; ylabel('PRESS. Foot','fontsize',FSZ);
+plot(tmeas, fittedPfoot);
+grid on; box on; ylabel('P Foot','fontsize',FSZ);
 title(sprintf('Beta= %1.2f; Nu: %1.3f', bfit,dfit));
 %
 ax(5) = subplot(515);
@@ -424,12 +426,14 @@ linkaxes(ax,'x');
 xlim([0 Tend]);
 
 
-figure(2); clf; 
+figure(3); clf; 
 plot(tmeas, pf);
-hold on;
-plot(t_ode, p4);
+hold on; grid on;
+% plot(t_ode, p4);
+plot(tmeas, p4);
+legend('pf','p4'); xlabel('Time');
 
-%%
+% =========================================================================
 
 % Below here, not very relevant calculations:
 try
@@ -447,7 +451,7 @@ try
     [frf,f] = modalfrf(S3vec',X',fs,win,'Sensor','vel'); %acc,vel,dis
     [ModalNatFreq,DampRatio] = modalfit(frf,f,fs,1,'FitMethod','lsce'); %lsce,lsrf,pp
     if 0
-            figure(3); clf;
+            figure(4); clf;
             modalfit(frf,f,fs,1,'FitMethod','lsce')   
     end
 end

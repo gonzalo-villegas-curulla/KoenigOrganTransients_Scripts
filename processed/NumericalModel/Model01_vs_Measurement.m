@@ -147,7 +147,7 @@ abserror = abs(p4meas-p4int);
 %           Plot results
 % ===================================
 
-%%
+%
 figure(1); clf;
 
 % /// velocity in ///
