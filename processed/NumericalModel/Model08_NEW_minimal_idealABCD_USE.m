@@ -6,7 +6,7 @@ pipelist = [1:22]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
 
 % Pallet valve openig time 
 ValveRampInit = 0.100; % [s] T-Start opening-ramp pallet valve
-ValveRampEnd  = 0.100001;  % [s] T-Finish opening-ramp (DROPIC robot time)
+ValveRampEnd  = 0.101;  % [s] T-Finish opening-ramp (DROPIC robot time)
 
 
 % ========= Physical constants =======

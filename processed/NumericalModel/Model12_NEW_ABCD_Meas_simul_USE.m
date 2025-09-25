@@ -1,15 +1,17 @@
 clc, clear;
 
-load data_proc.mat
+load data_proc.mat;
+
+Pg_hat = data_proc.Pgrv_mean(:)./data_proc.Ppall_mean(:);
+Pf_hat = data_proc.Pf_mean(:)./data_proc.Ppall_mean(:);
 
 pipelist = [8]; % \in[1,22]
 
-CHARtime_omega = 2e-3;
+CHARtime_omega = 1e-3;
 
 % Pallet valve openig time 
 ValveRampInit = 0.010; % [s] T-Start opening-ramp pallet valve
-
-RLIMms = 20;
+RLIMms        = 20;
 
 ValveRampEnd_vec = ValveRampInit + CHARtime_omega;
 
@@ -21,36 +23,48 @@ co  = 340;          co2 = co^2;
 % ======= Simulation parameters ==============
 fs   = 51.2e3; 
 dt   = 1/fs;
-Tend = 3.300;
+Tend = 3.300; 
 tvec = [0:dt:Tend]';
 
+SIGvec = [0.0, 1.0]';
+flagplot1 = 1; flagplot2 = 1;
 
-% Simulation ==================================
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ValveRampEnd  = ValveRampEnd_vec;  
-
 sample_select = pipelist(1);
 
-Xi   = data_proc.Amax(sample_select)/data_proc.B(sample_select);
-Zeta = data_proc.C(sample_select)/data_proc.D(sample_select);
-Volrat = data_proc.B(sample_select)/data_proc.C(sample_select);
 
-Atmp = 0.8*data_proc.PRTgrv_mean(sample_select); % From PRT    
-Btmp = Atmp/Xi;    % => data_proc.B(sample_select)./data_proc.Amax(sample_select)*Atmp;
-Ctmp = Btmp/Volrat;% => data_proc.C(sample_select)./data_proc.B(sample_select)*Btmp;
-Dtmp = Ctmp/Zeta;  % => data_proc.D(sample_select)./data_proc.C(sample_select)*Ctmp;
+Pg_hat = data_proc.Pgrv_mean(sample_select)/data_proc.Ppall_mean(sample_select);
+Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);
 
-Atmp = data_proc.Amax(sample_select);
-Btmp = data_proc.B(sample_select);
-Ctmp = data_proc.C(sample_select);
-Dtmp = data_proc.D(sample_select);
+figure(1); clf; hold on; box on; grid on;
+figure(2); clf; hold on; box on; grid on;
 
-        PASS_Amax=Atmp;
-        PASS_B=Btmp;
-        PASS_C=Ctmp;
-        PASS_D=Dtmp;
-        PASS_sigma_full=data_proc.sigma(sample_select);
+
+
+
+for IDX = 1 : length(SIGvec) 
+
+ValveRampEnd  = ValveRampEnd_vec;  
+sample_select = pipelist(1);
+
+SIG = SIGvec(IDX);
+
+
+[Ta, Tb, Tc, Td] = generateABCD(SIG, ...
+    Pf_hat, ...
+    Pg_hat, ...
+    data_proc.PRTgrv_mean(sample_select), ...
+    data_proc.Vgrv(sample_select), ...
+    data_proc.Vf(sample_select) );
+
+PASS_Amax = Ta;
+PASS_B    = Tb;
+PASS_C    = Tc;
+PASS_D    = Td;
+PASS_sigma_full = SIG;
+
 
 flag_error = 0;    
 y(1,:) = [1e-5,0];
@@ -80,21 +94,25 @@ pf_simul   = yout(:,2);
 pgrv_simul = interp1(t_ode, pgrv_simul, tvec);
 pf_simul   = interp1(t_ode, pf_simul, tvec);  
 %
-t10grv_simul = tvec(find(pgrv_simul/pgrv_simul(end) < 0.1,1,'last'));
-t90grv_simul = tvec(find(pgrv_simul/pgrv_simul(end) > 0.9,1,'first'));
+t10grv_simul = tvec(find(pgrv_simul/max(pgrv_simul) < 0.1,1,'last'));
+t90grv_simul = tvec(find(pgrv_simul/max(pgrv_simul) > 0.9,1,'first'));
 PRTgrv_simul = t90grv_simul-t10grv_simul;
 %
-t10f_simul = tvec(find(pf_simul/pf_simul(end) < 0.1,1,'last'));
-t90f_simul = tvec(find(pf_simul/pf_simul(end) > 0.9,1,'first'));
+t10f_simul = tvec(find(pf_simul/max(pf_simul) < 0.1,1,'last'));
+t90f_simul = tvec(find(pf_simul/max(pf_simul) > 0.9,1,'first'));
 PRTf_simul = t90f_simul-t10f_simul;
 %
-pf_over_pgrv_targ = pf_simul(end)/pgrv_simul(end);
-Pgrv_simul_targ         = pgrv_simul(end);
-Pf_simul_targ           = pf_simul(end);
+pf_over_pgrv_targ = max(pf_simul)/max(pgrv_simul);
+Pgrv_simul_targ   = max(pgrv_simul);
+Pf_simul_targ     = max(pf_simul);
 
 omegams = 1e3*(ValveRampEnd_vec-ValveRampInit);
 
 tvec_buffer = tvec;
+if flagplot1
+    t10grv_simul_GLOBAL = t10grv_simul;
+    t10f_simul_GLOBAL   = t10f_simul;
+end
 
 % =================
 % Measured data
@@ -151,54 +169,59 @@ t10f_meas_idx = find( pf_meas(1:end/2) < 0.1*Pf_targ_meas, 1, 'last');
 t90f_meas_idx = find( pf_meas(1:end/2) > 0.9*Pf_targ_meas, 1, 'first');
 PRTf_meas     = dt*(t90f_meas_idx-t10f_meas_idx);
 
+if flagplot1
+                    pgrv_meas = circshift(pgrv_meas, -t10grv_meas_idx + round(t10grv_simul_GLOBAL/dt));
+                    pf_meas   = circshift(pf_meas  , -t10f_meas_idx   + round(t10f_simul_GLOBAL/dt));
+end
 
-pgrv_meas = circshift(pgrv_meas, -t10grv_meas_idx + round(t10grv_simul/dt));
-pf_meas   = circshift(pf_meas  , -t10f_meas_idx   + round(t10f_simul/dt));
+% ========================= measured data =============================
 
 
     % ===================================
     %           Plot results
     % ===================================
+everyN = 100;
 
 
-figure(1); clf;
-plot( (tvec_buffer-t10grv_simul)*1e3,...
+figure(1);
+if flagplot1
+                plot( (tvec_buffer-t10grv_simul_GLOBAL)*1e3,...                   
     pgrv_meas,'k');  
-grid on;hold on;
-
-plot((tvec_buffer-t10grv_simul)*1e3, pgrv_simul, '--k');
-xlim([-t10grv_simul*1e3 RLIMms]);
-xlabel('Time [ms]');
-ylabel('Pressure [n.u.]');
-legend('P_{grv} measured','P_{grv} simulated', 'location','best');
-title(sprintf('PRTgrv meas %1.3f ms / PRTgrv simul %1.3f ms / OM_{CT}= %1.1f ms',1e3*PRTgrv_meas,1e3*PRTgrv_simul, 1e3*CHARtime_omega));
-
-figure(2); clf;
-plot((tvec_buffer-t10f_simul)*1e3, pf_meas,'k'); grid on;
-title(sprintf('PRTf meas %1.3f ms/PRTf simul %1.3f ms / OM_{CT} %1.1f ms',1e3*PRTf_meas,1e3*PRTf_simul, 1e3*CHARtime_omega));
+    flagplot1 = 0;    
+end
 hold on;
-plot((tvec_buffer-t10f_simul)*1e3, pf_simul, '--k');
-xlim([-t10f_simul*1e3 RLIMms]); 
-xlabel('Time [ms]');
-ylabel('Pressure [n.u]');
-legend('P_f measured','P_f simulated','location','best');
+                plot( (tvec_buffer-t10grv_simul)*1e3, pgrv_simul, '--', 'Marker','o','MarkerIndices',1:everyN:length(pgrv_simul));
 
 
 
 
+xlabel('Time [ms]', 'interpreter','latex');
+ylabel('Pressure [n.u.]', 'interpreter','latex');
+legend({'$P_{g}$ measured','$P_{g}$  simul.($\Sigma = 0.0)$','$P_g$ simul. ($\Sigma = 1.0$)'}, 'location','southeast','interpreter','latex');
+title(sprintf('PRT_g meas %1.3f ms // PRT_g simul %1.3f ms // Omega_{ct}= %1.1f ms',1e3*PRTgrv_meas,1e3*PRTgrv_simul, 1e3*CHARtime_omega));
+xlim([-10 20]);
+ylim([-0.1 1.0]);
 
 
+figure(2);
+if flagplot2    
+                plot((tvec_buffer-t10XXX_simul_YYY)*1e3, pf_meas,'k'); 
+    flagplot2 = 0;
+end
+hold on;
+                plot((tvec_buffer-t10XXX_simul_YYY)*1e3, pf_simul, '--', 'Marker','o', 'MarkerIndices',1:everyN:length(pf_simul) );
+                                 % STH's WRONG HERE
+                                 % when 2nd simulation
+
+xlabel('Time [ms]', 'interpreter','latex');
+ylabel('Pressure [n.u]', 'interpreter','latex');
+legend({'$P_{f}$ measured','$P_{f}$  simul.($\Sigma = 0.0)$','$P_f$ simul. ($\Sigma = 1.0$)'}, 'location','southeast','interpreter','latex');
+title(sprintf('PRT_f meas %1.3f ms // PRT_f simul %1.3f ms // OM_{CT} %1.1f ms',1e3*PRTf_meas,1e3*PRTf_simul, 1e3*CHARtime_omega));
+xlim([-10 20]);
+ylim([-0.025, 0.4]);
 
 
-
-
-
-
-
-
-
-
-
+end
 
 
 % =====================================================================================================================

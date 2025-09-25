@@ -164,8 +164,69 @@ title('PRT w.r.t. minAB');
 
 legend('PRT_{grv}','PRT_f', 'location','best');
 
+% ============================== B/W
+figure(17); clf;
+
+AAvec = AA(:); BBvec=BB(:);
+MX_PRTgrv_vec = results{1}.results.MX_PRTgrv(:);
+mask         = isnan(MX_PRTgrv_vec);
+MX_PRTgrv_vec(mask) = [];
+AAvec(mask) = [];
+BBvec(mask) = [];
+MX_PRTf_vec = results{1}.results.MX_PRTf(:);
+mask = isnan(MX_PRTf_vec);
+MX_PRTf_vec(mask) = [];
+
+
+
+plot( min(AAvec, BBvec), ...
+    1e3*MX_PRTgrv_vec,...
+    '.k');
+hold on;
+plot( min(AAvec,BBvec)+0.07,...
+    1e3*MX_PRTf_vec, ...
+    '.','color',[1,1,1]*160/255);
+legend('$PRT_g$','$PRT_f$','interpreter','latex','autoupdate','off');
+
+datafit1 = polyfit(min(AAvec, BBvec), ...
+    1e3*MX_PRTgrv_vec,...
+    1);
+querypoints = [0.5: 0.5: 20];
+fitvals  = polyval(datafit1, querypoints);
+hold on;
+plot(querypoints, fitvals, '-k');
+
+
+
+% ================
+MX_PRTf_vec = results{1}.results.MX_PRTf(:);
+mask = isnan(MX_PRTf_vec);
+MX_PRTf_vec(mask) = [];
+AAvec = AA(:); BBvec=BB(:);
+AAvec(mask) = []; BBvec(mask) = [];
+
+datafit2 = polyfit( min(AAvec,BBvec),...
+    1e3*MX_PRTf_vec, ...
+    1);
+fitvals2 = polyval(datafit2, querypoints);
+
+% plot( min(AAvec,BBvec)+0.07,...
+%     1e3*MX_PRTf_vec, ...
+%     '.','color',[1,1,1]*160/255);
+plot(querypoints, fitvals2, '-', 'color',[1,1,1]*160/255);
+
+grid on;
+xlabel('$min(A,B)\ [ms]$','interpreter','latex');
+ylabel('$PRT\ [ms]$','interpreter','latex');
+ylim([0 30]);
+
+plot([0,20],[0,20],'--k');
+
+
+%%
+
 % ================================================
-figure(8); clf;
+figure(18); clf;
 plot(1e3*data_proc.Amax, '-o');
 hold on;
 plot(1e3*data_proc.B, '-o');
@@ -181,7 +242,7 @@ PRT_f_over_grv = PRT_f_over_grv(mask);
 BB_mask        = BB(:);
 BB_mask        = BB_mask(mask);
 
-figure(9); clf;
+figure(19); clf;
 plot(1.*BB_mask, 1.*PRT_f_over_grv  , '.');
 grid on;hold on;
 

@@ -266,6 +266,7 @@ errorbar(fax,...
     '-v');
 xlabel('12log_2(f_1/440)');ylabel('P_0 [Pa]'); grid on; box on;ylim([0 900]);
 
+
 %%                      % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %       Transient analysis
@@ -296,7 +297,7 @@ Sj            = 1*MX(:,:,6);
 
         % Spall_max_eff = 1.*Spall_max;
 Spall_max_eff = 10.^(  -0.03732*12*log2(F1MEAN/440) - 4.6202 ); % fitted to computed 
-Sin_eff = Sj(:).*sqrt(median(MX(:,:,21),1,'omitnan')'./(median(MX(:,:,19),1,'omitnan')- median(MX(:,:,21),1,'omitnan') )'         );
+Sin_eff = Sj(:).*sqrt(median(MX(:,:,21),1,'omitnan')'./(median(MX(:,:,20),1,'omitnan')- median(MX(:,:,21),1,'omitnan') )'         );
 Sj_eff = 1.*Sj;
 
 tau_pall_L = l_pall*sqrt(rho/P0)*ones(length(Sin),1);
@@ -366,8 +367,30 @@ plot(Sj./Sin,...
     C./D,...
     'sk','markerfacecolor','k');
 grid on; 
-ylim([0 1.8]);ylabel('C/D');
-xlim([0 1.4]);xlabel('S^{geo}_j/S^{geo}_{in}');
+ylim([0 1.8]);ylabel('$C/D$', 'interpreter','latex');
+xlim([0 1.4]);xlabel('$S^{geo}_j/S^{geo}_{in}$', 'interpreter','latex');
+
+%% ======================================== (not transient)
+% Sj/Spall geo vs (1-Pg)/Pf
+% Fig4c
+
+P0_targ = median(MX(:,:,19), 1, 'omitnan');
+Pg_targ = median(MX(:,:,20), 1,'omitnan');
+Pf_targ = median(MX(:,:,21), 1, 'omitnan');
+
+% Normalize them
+Pg_targ = Pg_targ./P0_targ;
+Pf_targ = Pf_targ./P0_targ;
+
+figure(24);clf;
+plot(Sj./Spall_max,...
+    sqrt((1-Pg_targ)./Pf_targ), ...
+    'dk', 'markerfacecolor','k');
+grid on;
+xlim([0 0.07]);
+ylim([0 0.6]);
+xlabel('$S^{geo}_j/S^{geo}_{p}$', 'interpreter','latex');
+ylabel('$\sqrt{(1-P^{\oplus}_g)/P^{\oplus}_f}$','interpreter','latex');
 
                    
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -584,6 +607,7 @@ errorbar(12*log2(F1MEAN/440),...
 grid on; box on; 
 ylim([0 16]);
 legend('t^{90}_{grv}','t^{90}_{ft}');
+xlabel('$$','interpreter','latex');
 
 %% t10 delays: mech, hydro, acoust [[[to keep, 21/01/2025]]]
 
@@ -644,11 +668,17 @@ ylabel('$t^{90}_{ft} - t^{90}_{grv}$ [ms]','interpreter','latex');
 
 
 
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Acoustic analysis
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% empty
+
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Transient spectrum study
