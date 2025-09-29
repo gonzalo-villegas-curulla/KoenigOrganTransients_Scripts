@@ -1,12 +1,9 @@
 clc, clear;
-
 load data_proc.mat
 
-pipelist = [1:22]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
-
-% Pallet valve openig time 
-ValveRampInit = 0.100; % [s] T-Start opening-ramp pallet valve
-ValveRampEnd  = 0.101;  % [s] T-Finish opening-ramp (DROPIC robot time)
+pipelist      = [1:22];
+ValveRampInit = 0.100; % [s]
+ValveRampEnd  = 0.101;  % [s]
 
 
 % ========= Physical constants =======
@@ -14,61 +11,43 @@ rho = 1.2;
 co  = 340;          co2 = co^2;
 
 % ======= Simulation parameters ==============
-fs   = 2*51.2e3; 
+fs   = 51.2e3; 
 dt   = 1/fs;
-Tend = 0.300;
+Tend = 0.500;
 tvec = [0:dt:Tend];
 
+simul_all_PRTgrv   = zeros(length(pipelist), 1);
+simul_all_PRTf     = zeros(length(pipelist), 1);
 
-% Parameter value allocation and simulation run:
-MX_results = zeros(length(pipelist), 5); % Ppall, Pgrv, Pf, PRTgrv, PRTf
-
-res_Pgrv_trg = zeros(length(pipelist), 1);
-res_Pf_trg   = zeros(length(pipelist), 1);
-res_PRTgrv   = zeros(length(pipelist), 1);
-res_PRTf     = zeros(length(pipelist), 1);
-Ares = [];
-Bres = [];
+SIG = 1.0;
 
 % Perform simulation ==================================
 for pipe_loop_idx = 1:length(pipelist) 
 
     sample_select = pipelist(pipe_loop_idx);
-    % [PRTgrv,PRTf,pf_over_pgrv_targ, Pgrv_trg, Pf_trg, flag_error] = run_simulation( ...
-    %                     1.*data_proc.Amax(sample_select),...
-    %                     1.*data_proc.B(sample_select), ...
-    %                     data_proc.C(sample_select),...
-    %                     data_proc.D(sample_select),...
-    %                     data_proc.sigma(sample_select),...
-    %                     Tend, ValveRampInit, ValveRampEnd, tvec);
 
-    Xi   = data_proc.Amax(sample_select)/data_proc.B(sample_select);
-    Zeta = data_proc.C(sample_select)/data_proc.D(sample_select);
-    Volrat = data_proc.B(sample_select)/data_proc.C(sample_select);
-
-    Atmp = 0.79*data_proc.PRTgrv_mean(sample_select); % From PRT.- Def. 0.79
-    Atmp = 0.79*data_proc.PRTgrv_mean(sample_select); % From PRT.- Def. 0.79
+    Pg_hat = data_proc.Pgrv_mean(sample_select)/data_proc.Ppall_mean(sample_select);
+    Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);
     
-    Btmp = Atmp/Xi;    % = data_proc.B(sample_select)./data_proc.Amax(sample_select)*Atmp;
-    Ctmp = Btmp/Volrat;% = data_proc.C(sample_select)./data_proc.B(sample_select)*Btmp;
-    Dtmp = Ctmp/Zeta;  % = data_proc.D(sample_select)./data_proc.C(sample_select)*Ctmp;
+    [Ta, Tb, Tc, Td] = generateABCD(SIG, ...
+                        Pf_hat, ...
+                        Pg_hat, ...
+                        data_proc.PRTgrv_mean(sample_select), ...
+                        data_proc.Vgrv(       sample_select), ...
+                        data_proc.Vf(         sample_select));
 
-   [PRTgrv,PRTf,pf_over_pgrv_targ, Pgrv_trg, Pf_trg, flag_error] = run_simulation( ...
-                        Atmp,...
-                        Btmp, ...
-                        Ctmp,...
-                        Dtmp,...
-                        data_proc.sigma(sample_select),...
+
+   [PRTgrv,PRTf] = run_simulation( ...
+                        Ta,...
+                        Tb, ...
+                        Tc,...
+                        Td,...
+                        SIG,...
                         Tend, ValveRampInit, ValveRampEnd, tvec);
    
-
-        MX_results(pipe_loop_idx, :) = [1.0, Pgrv_trg, Pf_trg, PRTgrv, PRTf];   
-        res_Pgrv_trg(pipe_loop_idx) = Pgrv_trg;
-        res_Pf_trg(pipe_loop_idx)   = Pf_trg;
-        res_PRTgrv(pipe_loop_idx)   = PRTgrv;
-        res_Pf(pipe_loop_idx)       = PRTf;
-        Ares(pipe_loop_idx) = data_proc.Amax(sample_select);
-        Bres(pipe_loop_idx) = data_proc.Amax(sample_select);
+    simul_all_PRTgrv(  pipe_loop_idx)   = PRTgrv;
+    simul_all_PRTf(    pipe_loop_idx)   = PRTf;
+        
     
 end
 
@@ -77,141 +56,39 @@ end
     %           Plot results
     % ===================================
 
-figure(12); clf
-
-% [i]
-subplot(2,2,1); % PRTf simul vs meas
-errorbar(...
-    1e3*MX_results(:,5),...
-    1e3*data_proc.PRTf_mean,...
-    1e3*data_proc.PRTf_std,...
-    'v');
-grid on; xlabel('Simul [ms]'); ylabel('Meas [ms]'); title('PRT_f');
-ylim([0 8]);
-ax=gca;ax.XLim(1)=0;axis equal;
-ax.YLim(1) = 0;
-hold on; plot([0, 10],[0, 10],'-k');
-
-% [ii]
-subplot(2,2,2); % PRTgrv
-errorbar(...
-    1e3*MX_results(:,4),...
-    1e3*data_proc.PRTgrv_mean,...
-    1e3*data_proc.PRTgrv_std,...
-    'v');
-grid on; xlabel('Simul [ms]'); ylabel('Meas [ms]'); title('PRT_{grv}');
-ylim([0 8]);
-axis equal;
-ax=gca;ax.XLim(1) = 0;
-hold on; plot([0,8],[0,8],'-k');
-
-% [iii]
-std_ratio = 1./data_proc.Pgrv_mean.^2.*data_proc.Pgrv_std.^2 + ...
-    (data_proc.Pgrv_mean./data_proc.Ppall_mean.^2).^2 .* data_proc.Ppall_std.^2;
-std_ratio = sqrt(std_ratio);
-
-subplot(2,2,3); %Pgrv/Ppall vs simul Pgrv
-errorbar(...
-    MX_results(:,2),...
-    data_proc.Pgrv_mean./data_proc.Ppall_mean,...
-    std_ratio,...
-    'v');
-grid on; xlabel('P_{grv} simul'); ylabel('P_{grv}/P_{pall} meas'); title('P_{grv}/P_{pall} ratio');
-xlim([0 1.]);ylim([0 1.]);
-
-% [iv]
-std_ratio = 1./data_proc.Pgrv_mean.^2 .* data_proc.Pf_std.^2 + ...
-    (data_proc.Pf_mean./data_proc.Pgrv_mean.^2).^2.*data_proc.Pgrv_std.^2;
-std_ratio = sqrt(std_ratio);
-
-subplot(2,2,4); % Pf/Pgrv meas vs simul Pf/Pgrv
-errorbar(...
-    MX_results(:,3)./MX_results(:,2),...
-    data_proc.Pf_mean./data_proc.Pgrv_mean,...
-    std_ratio,...
-    'v');
-grid on; xlabel('Simul P_f/P_{grv}'); ylabel('Meas P_f/P_{grv}'); title('P_f/P_{grv} ratio');
-hold on;
-plot([0,1],[0,1],'-k', 'linewidth',1.5);
-xlim([0 1.]);ylim([0 1.3]);
-legend('Data','Ideal');
-
-% ====================== ======================
-
 fax = 12*log2(data_proc.F1/440);
 
-figure(13); clf;
+figure(1); clf;
 
-% [i]
-subplot(2,2,2); % PRTf simul vs meas
 errorbar(fax, ...
-    1e3*data_proc.PRTf_mean,...
-    1e3*data_proc.PRTf_std,...
-    'v');
-grid on; 
-% xlabel('Simul [ms]'); ylabel('Meas [ms]'); 
-title('PRT_f');
-% ylim([0 8]);
-hold on;
-plot( fax,...
-    1e3*MX_results(:,5) );
-xlabel('12log_2(F_1/440)');
-ylabel('[ms]');
-legend('Meas','Simul');
-
-% [ii]
-subplot(2,2,1); % PRTgrv
-errorbar(...
-    fax,...
     1e3*data_proc.PRTgrv_mean,...
     1e3*data_proc.PRTgrv_std,...
-    'v');
-grid on; 
-% xlabel('Simul [ms]'); ylabel('Meas [ms]'); 
-title('PRT_{grv}');
-% ylim([0 8]);
-hold on;
-plot(fax, 1e3*MX_results(:,4) );
-xlabel('12log_2(F_1/440)');
-ylabel('[ms]');
-legend('Meas','Simul');
+    'vk');
+grid on; hold on;
+plot( fax,...
+    1e3*simul_all_PRTgrv, ...
+    'o-k', 'markerfacecolor','k');
+xlabel('$12\times log_2(F_1/440)$', 'interpreter','latex');
+ylabel('[ms]', 'interpreter','latex');
+ylim([0 13]);
+legend('PRT$_g$ Meas.','PRT$_g$ Simul.', 'interpreter','latex');
 
-
-% [iii]
-
-std_ratio = 1./data_proc.Pgrv_mean.^2 .* data_proc.Pgrv_std.^2 + ...
-    (data_proc.Pgrv_mean./data_proc.Ppall_mean.^2).^2.*data_proc.Ppall_std.^2;
-std_ratio = sqrt(std_ratio);
-subplot(2,2,3); %Pgrv/Ppall vs simul Pgrv
+%
+figure(2); clf;
 errorbar(...
     fax,...
-    data_proc.Pgrv_mean./data_proc.Ppall_mean,...
-    std_ratio,... 
-    'v');
-hold on;
-plot(fax, MX_results(:,2));
-grid on;  title('P_{grv}/P_{pall} ratio');
-xlabel('12log_2(F_1/440)');
-legend('Meas','Simul');
-ylim([0.8 1]);
+    1e3*data_proc.PRTf_mean,...
+    1e3*data_proc.PRTf_std,...
+    'vk');
+grid on; hold on;
+plot(fax, 1e3*simul_all_PRTf,...
+    'o-k', 'markerfacecolor','k');
+xlabel('$12\times log_2(F_1/440)$', 'interpreter','latex');
+ylabel('[ms]', 'interpreter','latex');
+ylim([0 13]);
+legend('PRT$_f$ Meas.','PRT$_f$ Simul.','interpreter','latex');
 
-% [iv]
-std_rat = (1./data_proc.Pgrv_mean).^2.*data_proc.Pf_std.^2 +...
-    (data_proc.Pf_mean./data_proc.Pgrv_mean.^2).^2.*data_proc.Pgrv_std.^2;
-std_rat = sqrt(std_rat);
 
-subplot(2,2,4); % Pf/Pgrv meas vs simul Pf/Pgrv
-errorbar(...
-    fax,...
-    data_proc.Pf_mean./data_proc.Pgrv_mean,...
-    std_rat,...
-    'v');
-hold on;
-plot(fax, MX_results(:,3)./MX_results(:,2))
-
-xlabel('12log_2(F_1/440)'); legend('Meas','Simul');
-grid on;
-title('P_f/P_{grv} ratio');
 
 
 
@@ -223,24 +100,23 @@ title('P_f/P_{grv} ratio');
 
 % Simulation FUNCTION
 
-function     [PRTgrv,PRTf,pf_over_pgrv_targ,Pgrv_trg, Pf_trg, flag_error] = run_simulation(...
+function     [PRTgrv,PRTf] = run_simulation(...
                        PASS_Amax,...
                        PASS_B, ...
                        PASS_C, ...
                        PASS_D, ...
                        PASS_sigma_full, ...
                        Tend, ValveRampInit, ValveRampEnd, tvec)
+     
+    y(1,:) = [1e-5,0]; % Initialisae 1st two time steps
+    y(2,:) = [1e-5,0]; % Init 1st two time steps
     
-    flag_error = 0;    
-    y(1,:) = [1e-5,0];
-    y(2,:) = [1e-5,0];
-    
-    tstart = 1e-3;
+    tstart = 1e-6; 
     tfinal = Tend;
     refine = 4;
-    opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Refine',refine);
+    opts   = odeset('RelTol',1e-8,'AbsTol',1e-8,'Refine',refine);
     
-    [t_ode,y] = ode113(@(t_ode,y) solverA(t_ode, y,...
+    [t_ode,y] = ode78(@(t_ode,y) solverA(t_ode, y,...
                                         PASS_Amax,...
                                         PASS_B,...
                                         PASS_C,...
@@ -254,14 +130,11 @@ function     [PRTgrv,PRTf,pf_over_pgrv_targ,Pgrv_trg, Pf_trg, flag_error] = run_
             
             pgrv = yout(:,1);
             pf   = yout(:,2);
-            if max(abs(pf))/max(abs(pgrv))>1  % Parse exp() explosion of solution
-                flag_error = 1;
-            end
             
             % Resample homogeneously
             pgrv = interp1(t_ode, pgrv, tvec);
             pf   = interp1(t_ode, pf, tvec);  
-            
+
             t10grv = tvec(find(pgrv/pgrv(end)<0.1,1,'last'));
             t90grv = tvec(find(pgrv/pgrv(end)>0.9,1,'first'));
             PRTgrv = t90grv-t10grv;
@@ -270,24 +143,14 @@ function     [PRTgrv,PRTf,pf_over_pgrv_targ,Pgrv_trg, Pf_trg, flag_error] = run_
             t90f = tvec(find(pf/pf(end)>0.9,1,'first'));
             PRTf = t90f-t10f;
             
-            pf_over_pgrv_targ = pf(end)/pgrv(end);
-            Pgrv_trg = pgrv(end);
-            Pf_trg   = pf(end);
+            % figure(23); clf;
+            % plot(tvec, pgrv, 'o');
+            % hold on; grid on;
+            % plot(tvec, pf, 'o');
+            % drawnow();
+            % pause();
         
-            if 0 % Plot on the all all time integrations
-                        figure(20);clf;
-                        LW = 1.5;
-                        plot(t_ode*1e3, yout(:,1),'linewidth',LW);
-                        hold on; grid on;
-                        plot(t_ode*1e3, yout(:,2),'linewidth',LW);
-                        
-                        % xlim([0.98*t10grv 1.02*t90f]*1e3);  
-                        xlim([100, 120]);
-                        ylim([-0.125 1.1]);
-                        title(sprintf('A: %1.2f, B: %1.2f',1e3*PASS_Amax, 1e3*PASS_B));
-                        drawnow();
-                        pause();
-            end
+            
 end
 
 
@@ -297,17 +160,14 @@ end
 
 function dydt = solverA(t_ode, y, A,B,C,D,sigMa_full, ValveRampInit, ValveRampEnd)
 
-omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);
-
-dydt = zeros(2,1);
-% dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-omeg.^2*sigMa_full.^2) -2*y(2) + omeg.^2*sigMa_full^2 ))/B;
-% dydt(2) = real(sqrt(y(1)*(2-omeg.^2*sigMa_full.^2) -2*y(2)+omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
-
-
-
-% Redo calculation gives a missing factor 2, corrected below:
-dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
-dydt(2) = real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
+    omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);
+    
+    % y(1): Pgrv
+    % y(2): Pf
+    dydt = zeros(2,1);
+    
+    dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
+    dydt(2) = real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
 
 
 end
@@ -318,8 +178,8 @@ function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
         OM = 0.0;
     elseif ValveRampEnd<t_ode
         OM = 1.0;        
-    else
-        OM = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+    else        
+        OM = 0.5 - 0.5*cos(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit));
     end      
 
 end
