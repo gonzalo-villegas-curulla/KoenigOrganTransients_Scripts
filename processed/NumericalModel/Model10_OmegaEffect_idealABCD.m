@@ -2,20 +2,14 @@ clc, clear;
 
 load data_proc.mat
 
-pipelist = [8]; %Def 8 % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
+pipelist = [8]; %Def 8 % \in[1,22]
 
 % Pallet valve openig time 
 ValveRampInit = 0.100; % [s] T-Start opening-ramp pallet valve
-
-
-ValveRampEnd_vec = ValveRampInit + 1e-3*[0.05, 0.07,0.1,0.15,0.2,0.25,0.3,...
+ValveRampEnd_vec = ValveRampInit +...
+    1e-3*[0.05, 0.07,0.1,0.15,0.2,0.25,0.3,...
     0.35, 0.4, 0.45, 0.5,1,2,3,4,5,6,7,8,9,10,...
-    12,14,18,22,30,40,50];%, 100, 200];
-% % ValveRampEnd_vec = ValveRampInit + 1e-3*[0.005:0.005:6];
-% ValveRampEnd_vec = ValveRampInit + 1e-3*300;
-% ValveRampEnd_vec = ValveRampInit + 1e-3 + 1e-3*[-0.9 :0.05: 2.5] ;
-% ValveRampEnd_vec = ValveRampInit + 1e-3 + 1e-3*[0.5*30 : 0.5 : 1.2*30] ;
-
+    12,14,18,22,30,40,50];
 
 
 % ========= Physical constants =======
@@ -27,6 +21,8 @@ fs   = 4*51.2e3;
 dt   = 1/fs;
 Tend = 3.300;
 tvec = [0:dt:Tend]';
+
+SIG = 1;
 
 
 % Parameter value allocation and simulation run:
@@ -43,30 +39,24 @@ for IDX = 1:length(ValveRampEnd_vec)
     ValveRampEnd  = ValveRampEnd_vec(IDX);  
 
     sample_select = pipelist(1);
-    % [PRTgrv,PRTf,pf_over_pgrv_targ, Pgrv_trg, Pf_trg, flag_error] = run_simulation( ...
-    %                     1.*data_proc.Amax(sample_select),...
-    %                     1.*data_proc.B(sample_select), ...
-    %                     data_proc.C(sample_select),...
-    %                     data_proc.D(sample_select),...
-    %                     data_proc.sigma(sample_select),...
-    %                     Tend, ValveRampInit, ValveRampEnd, tvec);
+    Pg_hat = data_proc.Pgrv_mean(sample_select)/data_proc.Ppall_mean(sample_select);
+    Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);
 
-    Xi   = data_proc.Amax(sample_select)/data_proc.B(sample_select);
-    Zeta = data_proc.C(sample_select)/data_proc.D(sample_select);
-    Volrat = data_proc.B(sample_select)/data_proc.C(sample_select);
-
-    Atmp = 0.8*data_proc.PRTgrv_mean(sample_select); % From PRT    
-    Btmp = Atmp/Xi;    % => data_proc.B(sample_select)./data_proc.Amax(sample_select)*Atmp;
-    Ctmp = Btmp/Volrat;% => data_proc.C(sample_select)./data_proc.B(sample_select)*Btmp;
-    Dtmp = Ctmp/Zeta;  % => data_proc.D(sample_select)./data_proc.C(sample_select)*Ctmp;
+    [Ta, Tb, Tc, Td] = generateABCD(SIG, ...
+                        Pf_hat, ...
+                        Pg_hat, ...
+                        data_proc.PRTgrv_mean(sample_select), ...
+                        data_proc.Vgrv(       sample_select), ...
+                        data_proc.Vf(         sample_select));
+    
     
 
    [PRTgrv,PRTf,pf_over_pgrv_targ, Pgrv_trg, Pf_trg, flag_error] = run_simulation( ...
-                        Atmp,...
-                        Btmp, ...
-                        Ctmp,...
-                        Dtmp,...
-                        data_proc.sigma(sample_select),...
+                        Ta,...
+                        Tb, ...
+                        Tc,...
+                        Td,...
+                        SIG,...
                         Tend, ValveRampInit, ValveRampEnd, tvec);
    
 
@@ -84,7 +74,7 @@ end
     %           Plot results
     % ===================================
 
-figure(15); clf;
+figure(); clf;
 
 omegams = 1e3*(ValveRampEnd_vec-ValveRampInit);
 
@@ -92,19 +82,14 @@ plot(omegams , 1e3*res_PRTgrv);
 grid on; hold on; xlabel('$\Omega (t)$ char. rise time [ms]', 'interpreter','latex');
 plot(1e3*(ValveRampEnd_vec-ValveRampInit), 1e3*res_PRTf);
 
-% plot([0 1e3*(ValveRampEnd-ValveRampInit)],...
-    % [0 1e3*(ValveRampEnd-ValveRampInit)],'-k');
 ylabel('PRT [ms]');
 
 legend('PRT$_{grv}$','PRT$_f$','location','best', 'Autoupdate','off', 'interpreter','latex'); %axis equal;
 ax=gca; 
 ax.XLim(1) = 0; 
-% ax.YLim(1) = 4; ax.YLim(2) = 7;
 xlim([0 50]);
 ylim([0 25]);
 
-% [pp,zz] = zoomPlot(omegams, 1e3*[res_PRTgrv res_PRTf], [0.1 8],[0.2, 0.5, 0.2, 0.3], [3,4]);
-% grid on;ylim([4 10]);
 
 
 % =====================================================================================================================
@@ -217,7 +202,7 @@ function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
     elseif ValveRampEnd<t_ode
         OM = 1.0;       
     else
-        OM = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+        OM = 0.5 - 0.5*cos(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit));
     end      
 
 end

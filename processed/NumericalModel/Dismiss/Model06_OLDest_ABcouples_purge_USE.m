@@ -16,6 +16,8 @@ ValveRampEnd  = 0.101;  % [s] T-Finish opening-ramp (DROPIC robot time)
 lower_bound_factor = 0.8; % Lower end of parameter under modification (Def., 0.5x and 2.0x)
 upper_bound_factor = 1.2;
 
+SIG = 0.9;
+
 % %%%%%%%%%%%%%%   END OF CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
 
 % ------------------------------------------------------------------------
@@ -70,7 +72,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
                                 results{pipe_loop_idx}.Bmodif.vals(JDX) ,...
                                 data_proc.C(sample_select) ,...
                                 data_proc.D(sample_select) ,...
-                                data_proc.sigma(sample_select),...
+                                SIG,...
                                 Tend, ValveRampInit, ValveRampEnd, tvec);
             if flag_error
                 MX_PRTgrv(IDX,JDX)  = nan;
@@ -122,47 +124,6 @@ mask_unique = 1:length(unique(BB(wheremaxf)));
 slopemaxf = BB(wheremaxf(mask_unique))./AA(wheremaxf(mask_unique));
 
 
-% ===============================================================
-
-lgd = cell(length(pipelist), 1);
-for idx = 1 : length(pipelist)
-    lgd{idx} = sprintf('Sample %d', pipelist(idx));
-end
-
-
-% =====  PRT ========
-
-RESOL = 10;
-
-figure(6); clf; 
-contourf(AA,BB, 1e3*results{1}.results.MX_PRTgrv, RESOL);
-xlabel('A [ms]'); ylabel('B [ms]'); 
-title(sprintf('PRTgrv [ms]'));%. Slope: %1.3f',median(slopemaxgrv)));
-colorbar(); axis equal;
-% hold on;
-% plot(1e3*[LOWER,UPPER],1e3*[LOWER,UPPER], 'r', 'linewidth', 2);
-% plot(AA(wheremaxgrv), BB(wheremaxgrv), 'om');
-
-
-% GVC KEEP [2025/03/17] ================================================
-figure(7);clf;
-% plot( min(AA(:), BB(:)), ...
-plot( min(AA(:), BB(:)), ...
-    1e3*results{1}.results.MX_PRTgrv(:) ,...
-    '.');
-hold on;
-plot( min(AA(:), BB(:)) + 0.07, ...
-    1e3*results{1}.results.MX_PRTf(:) ,...
-    '.');
-% axis equal;
-grid on;
-plot([0,20],[0,20],'-k', 'linewidth', 1.5);
-xlabel('min(A,B) [ms]');
-ylabel('PRT [ms]');
-title('PRT w.r.t. minAB');
-
-
-legend('PRT_{grv}','PRT_f', 'location','best');
 
 % ============================== B/W
 figure(17); clf;
@@ -210,9 +171,6 @@ datafit2 = polyfit( min(AAvec,BBvec),...
     1);
 fitvals2 = polyval(datafit2, querypoints);
 
-% plot( min(AAvec,BBvec)+0.07,...
-%     1e3*MX_PRTf_vec, ...
-%     '.','color',[1,1,1]*160/255);
 plot(querypoints, fitvals2, '-', 'color',[1,1,1]*160/255);
 
 grid on;
@@ -222,36 +180,6 @@ ylim([0 30]);
 
 plot([0,20],[0,20],'--k');
 
-
-%%
-
-% ================================================
-figure(18); clf;
-plot(1e3*data_proc.Amax, '-o');
-hold on;
-plot(1e3*data_proc.B, '-o');
-xlabel('sample pipe num'); ylabel('[ms]'); title('A and B across tessitura'); legend('A','B'); grid on;
-
-% [OK] ================================================
-% de-nan-ify
-PRTf_lin       = results{1}.results.MX_PRTf(:);
-PRTgrv_lin     = results{1}.results.MX_PRTgrv(:);
-PRT_f_over_grv = PRTf_lin ./ PRTgrv_lin;
-mask           = ~isnan(PRT_f_over_grv);
-PRT_f_over_grv = PRT_f_over_grv(mask);
-BB_mask        = BB(:);
-BB_mask        = BB_mask(mask);
-
-figure(19); clf;
-plot(1.*BB_mask, 1.*PRT_f_over_grv  , '.');
-grid on;hold on;
-
-
-pfit = polyfit(  1./BB_mask, 1./PRT_f_over_grv, 1);
-
-plot( BB_mask, 1./polyval(pfit,1./BB_mask), '-k');
-
-xlabel('B [ms]'); ylabel('PRT_f/PRT_{grv}'); title('PRT_f/PRT_{grv} w.r.t. B');
 
 
 
@@ -324,16 +252,19 @@ xlabel('B [ms]'); ylabel('PRT_f/PRT_{grv}'); title('PRT_f/PRT_{grv} w.r.t. B');
     
     pf_over_pgrv_targ = pf(end)/pgrv(end);
 
-    if 0 % Plot on the all all time integrations
+    if 1 % Plot on the all all time integrations
                 figure(10);clf;
                 LW = 1.5;
                 plot(t_ode*1e3, yout(:,1),'linewidth',LW);
                 hold on;
                 plot(t_ode*1e3, yout(:,2),'linewidth',LW);
-                ylim([-0.125 1.1]);
+                ylim([-0.125 1.1]);                
+                fprintf(sprintf('Max pgrv: %1.3f. Nan grv %d. Nan f %d. Max pf: %1.3f\n',...
+                    max(pgrv), isnan(pgrv(end)),isnan(pf(end)) , max(pf)));
+                xlim([95 120]);
+                grid on;
                 drawnow();
-                fprintf(sprintf('Max pgrv: %1.3f. Flag %d. Min pgrv: %1.3f\n',max(pgrv), (max(pgrv)<0), min(pgrv)));
-                pause();
+                pause(0.05);
     end
 end
 

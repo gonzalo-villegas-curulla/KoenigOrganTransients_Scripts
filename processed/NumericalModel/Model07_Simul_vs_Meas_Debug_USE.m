@@ -4,7 +4,7 @@ clc, clear;
 
 load data_proc.mat
 
-pipelist = [1:22]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
+pipelist = [1:22]; % \in[1,22] 
 
 % Pallet valve openig time 
 

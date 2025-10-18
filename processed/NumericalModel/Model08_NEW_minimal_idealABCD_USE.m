@@ -60,14 +60,13 @@ fax = 12*log2(data_proc.F1/440);
 
 figure(1); clf;
 
-errorbar(fax, ...
+plot(fax, ...
     1e3*data_proc.PRTgrv_mean,...
-    1e3*data_proc.PRTgrv_std,...
-    'vk');
+    '*k');
 grid on; hold on;
 plot( fax,...
     1e3*simul_all_PRTgrv, ...
-    'o-k', 'markerfacecolor','k');
+    'dk', 'markerfacecolor','k');
 xlabel('$12\times log_2(F_1/440)$', 'interpreter','latex');
 ylabel('[ms]', 'interpreter','latex');
 ylim([0 13]);
@@ -75,14 +74,13 @@ legend('PRT$_g$ Meas.','PRT$_g$ Simul.', 'interpreter','latex');
 
 %
 figure(2); clf;
-errorbar(...
+plot(...
     fax,...
-    1e3*data_proc.PRTf_mean,...
-    1e3*data_proc.PRTf_std,...
-    'vk');
+    1e3*data_proc.PRTf_mean,...    
+    '*k');
 grid on; hold on;
 plot(fax, 1e3*simul_all_PRTf,...
-    'o-k', 'markerfacecolor','k');
+    'dk', 'markerfacecolor','k');
 xlabel('$12\times log_2(F_1/440)$', 'interpreter','latex');
 ylabel('[ms]', 'interpreter','latex');
 ylim([0 13]);
@@ -124,12 +122,12 @@ function     [PRTgrv,PRTf] = run_simulation(...
                                         PASS_sigma_full, ...
                                         ValveRampInit, ValveRampEnd),...
                                         [tstart tfinal], y(2,:), opts); 
-    yout = y;
+    
     
             % ====  Analysis  ===============================
             
-            pgrv = yout(:,1);
-            pf   = yout(:,2);
+            pgrv = y(:,1);
+            pf   = y(:,2);
             
             % Resample homogeneously
             pgrv = interp1(t_ode, pgrv, tvec);
@@ -143,17 +141,12 @@ function     [PRTgrv,PRTf] = run_simulation(...
             t90f = tvec(find(pf/pf(end)>0.9,1,'first'));
             PRTf = t90f-t10f;
             
-            % figure(23); clf;
-            % plot(tvec, pgrv, 'o');
-            % hold on; grid on;
-            % plot(tvec, pf, 'o');
-            % drawnow();
-            % pause();
-        
-            
 end
 
 
+% ==================================
+%            FUNCTIONS 
+% ==================================
 
 
 % == ODE to solve ======================

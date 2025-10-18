@@ -4,7 +4,7 @@ load data_proc.mat
 
 % %%%%%%%%%%%%%%%%   CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
 
-pipelist = [1,4,8,12,14]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
+pipelist = [1,8,12]; % \in[1,22] (DO NOT INCLUDE MORE THAN 3 PIPES at a time)
 
 YLIMS = [0 5.5];
 
@@ -60,7 +60,7 @@ for pipe_loop_idx = 1:length(pipelist) % =======================================
     results{pipe_loop_idx}.Bmodif.vals     = linspace(min(data_proc.B)*lower_bound_factor, max(data_proc.B)*upper_bound_factor, Nsteps)';
     results{pipe_loop_idx}.Cmodif.vals     = linspace(min(data_proc.C)*lower_bound_factor, max(data_proc.C)*upper_bound_factor, Nsteps)';
     results{pipe_loop_idx}.Dmodif.vals     = linspace(min(data_proc.D)*lower_bound_factor, max(data_proc.D)*upper_bound_factor, Nsteps)';
-    results{pipe_loop_idx}.Sigmamodif.vals = linspace(min(data_proc.sigma)*lower_bound_factor,1+0*max(data_proc.sigma)*upper_bound_factor, Nsteps)';
+    results{pipe_loop_idx}.Sigmamodif.vals = linspace(min(data_proc.sigma)*lower_bound_factor,1*max(data_proc.sigma)*upper_bound_factor, Nsteps)';
    
 
     for IDX = 1:Nsteps

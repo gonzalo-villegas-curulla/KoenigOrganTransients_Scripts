@@ -1,0 +1,249 @@
+clc, clear;
+load data_proc.mat
+
+global vobj
+vobj = VideoWriter('output.avi');
+vobj.FrameRate = 1;
+open(vobj);
+
+% global F;
+
+% %%%%%%%%%%%%%%%%   CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
+
+pipelist = [8];
+
+% Pallet valve openig time 
+
+ValveRampInit = 0.100; % [s] T-Start opening-ramp pallet valve
+ValveRampEnd  = 0.101;  % [s] T-Finish opening-ramp (DROPIC robot time)
+
+
+% %%%%%%%%%%%%%%   END OF CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
+
+% ------------------------------------------------------------------------
+%  1   2   3   4   5   6   7   8   9   10   11   12   13   14   15   16     <=== PipeNum
+%          1   2   3   4   5       6    7    8         9        10          <=== Sample Num
+%          X   X   X   X   X       X    X    X         X         X          <=== Trusted
+% ------------------------------------------------------------------------
+%  17   18   19   20   21   22   23   24   25   26   27   28   29   30
+%  11        12                       13   14        15        16
+%   X         X                        X    X
+% ------------------------------------------------------------------------
+%  31   32   33   34   35   36   37   38   39   40   41   42   43   44 ...
+%       17        18             19        20        21             22
+%                  X
+% ------------------------------------------------------------------------
+
+
+
+% ========= Physical constants =======
+rho = 1.2;
+co  = 340;          co2 = co^2;
+P0  = 820;
+
+% ======= Simulation parameters ==============
+fs   = 51.2e3; 
+dt   = 1/fs;
+Tend = 0.300;
+tvec = [0:dt:Tend]';
+
+NUMVALS = 10;
+
+tinit = tic;
+results = cell(length(pipelist),1);
+
+
+    sample_select = pipelist(1);
+
+    Pg_hat = data_proc.Pgrv_mean(sample_select)/data_proc.Ppall_mean(sample_select);
+    Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);    
+    Vg = data_proc.Vgrv(sample_select);
+    Vf = data_proc.Vf(sample_select);
+
+    Spall_geo = data_proc.Spall_geom(sample_select);
+    Sin_geo   = data_proc.Sin_geom(sample_select);
+    Sj_geo    = data_proc.Sjet_geom(sample_select);
+
+
+    Ta_geo = Vg/(Spall_geo*co2)*sqrt(P0/rho);
+    Tb_geo = Vg/(Sin_geo*co2)*sqrt(P0/rho);
+    Tc_geo = Vf/(Sin_geo*co2)*sqrt(P0/rho);
+    Td_geo = Vf/(Sj_geo*co2)*sqrt(P0/rho);
+    Tomega = 1e-3;  
+
+    Ta_log     = logspace(-1.3,1.3,NUMVALS);
+    Tb_log     = logspace(0, 1.2, NUMVALS);
+    Tc_lin     = linspace(1.7,2.4, NUMVALS);
+    Td_lin     = linspace(0.8, 2, NUMVALS);
+    Tomega_log = logspace(-1.3, 1.3, 10);
+
+    Ta_log = logspace(-2,1.7, NUMVALS );
+   
+% parametrify(Ta_geo, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec)
+            
+
+    % ===================================
+    %           Plot results
+    % ===================================
+fig1 = figure(1); clf; ax1 = axes(fig1); hold on; box on; grid on;
+
+SIG = 0;
+plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
+SIG = 1;
+plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
+
+
+
+close(vobj);
+
+% =====================================================================================================================
+% =====================================================================================================================
+% =====================================================================================================================
+    
+
+function [PRTg] = parametrify(Ta_pass, Tb_pass, Tc_pass, Td_pass, Tomega, SIG, ValveRampInit, Tend, tvec)
+
+    PRTg = []; 
+    if length(Ta_pass)>1
+        for idx = 1 : length(Ta_pass)
+            PRTg = [PRTg, run_simulation( Ta_pass(idx),Tb_pass,Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+        end
+    end
+    if length(Tb_pass)>1
+        for idx = 1 : length(Tb_pass)
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass(idx),Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+        end
+    end
+    if length(Tc_pass)>1
+        for idx = 1 : length(Tc_pass)
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass(idx),Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+        end
+    end
+    if length(Td_pass)>1
+        for idx = 1 : length(Td_pass)
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass,Td_pass(idx),SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+        end
+    end
+    if length(Tomega)>1
+        for idx = 1 : length(Tomega)
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega(idx), tvec)];
+        end
+    end
+
+    
+
+
+end
+    
+function [PRTgrv] = run_simulation(...
+       PASS_Amax, ...
+       PASS_B, ...
+       PASS_C, ...
+       PASS_D, ...
+       PASS_sigma_full, ...
+       Tend, ValveRampInit, ValveRampEnd, tvec)
+    
+    
+    % ===================================
+    % Solve ODE system 
+    % ===================================
+    
+    y(1,:) = [1e-5,1.1e-5];
+    y(2,:) = [1e-5,1.1e-5];
+    
+    tstart = 1e-3;
+    tfinal = Tend;
+    refine = 4;
+    
+    opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Refine',refine);
+    
+    % ===== Solvers:  =====
+    %   15s, 
+    %   113 (accurate, sometimes slow)**, 
+    %   23, 23s
+    %   45 (non-adapted time-step)
+    
+    [t_ode,y] = ode45(@(t_ode,y) solverA(t_ode, y,...
+        PASS_Amax,...
+        PASS_B, ...
+        PASS_C, ...
+        PASS_D, ...
+        PASS_sigma_full, ...
+        ValveRampInit, ValveRampEnd),...
+        [tstart tfinal], y(2,:), opts); 
+    
+    
+    % ===================================
+    %           Analysis
+    % ===================================
+    
+    pgrv = y(:,1);
+    pf   = y(:,2);
+     
+    % Resample homogeneously
+    pgrv = interp1(t_ode, pgrv, tvec);
+    pf   = interp1(t_ode, pf, tvec);  
+    
+    t10grv = tvec(find(pgrv/pgrv(end)<0.1,1,'last'));
+    t90grv = tvec(find(pgrv/pgrv(end)>0.9,1,'first'));
+    PRTgrv = t90grv-t10grv;
+    
+    t10f = tvec(find(pf/pf(end)<0.1,1,'last'));
+    t90f = tvec(find(pf/pf(end)>0.9,1,'first'));
+    PRTf = t90f-t10f;
+
+
+    if 1 % Plot on the all all time integrations
+        
+        global vobj;
+        figure(10);clf;
+        LW = 1.5;
+        plot(t_ode*1e3, y(:,1),'linewidth',LW);
+        hold on;
+        plot(t_ode*1e3, y(:,2),'linewidth',LW);                              
+        fprintf(sprintf('Max pgrv: %1.3f. Nan grv %d. Nan f %d. Max pf: %1.3f\n',...
+            max(pgrv), isnan(pgrv(end)),isnan(pf(end)) , max(pf)));
+        % xlim([95 120]);
+        % ylim([-0.125 1.1]);  
+        grid on;
+        xlabel('Time [ms]');ylabel('pressure [n.u.]'); 
+        title(sprintf('Solution in time. Ta: %1.2f (ms); SIG: %1.1f',PASS_Amax,PASS_sigma_full));
+        drawnow();
+        % writeVideo(vobj, getframe(gcf) );                
+        pause(0.75);
+        
+    end
+   
+    
+end
+
+
+
+% ==================================
+%            FUNCTIONS 
+% ==================================
+
+% == ODE to solve ======================
+
+function dydt = solverA(t_ode, y,A,B,C,D,sigMa_full, ValveRampInit, ValveRampEnd)
+
+omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);
+
+dydt = zeros(2,1);
+dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
+dydt(2) = real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
+
+
+end
+% -------------------------
+function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
+
+    if     t_ode<=ValveRampInit
+        OM = 0.0;
+    elseif ValveRampEnd<t_ode
+        OM = 1.0;        
+    else
+        OM = 0.5 - 0.5*cos(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit));
+    end      
+
+end
