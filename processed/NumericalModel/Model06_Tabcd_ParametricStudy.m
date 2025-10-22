@@ -87,10 +87,15 @@ results = cell(length(pipelist),1);
     % ===================================
 fig1 = figure(1); clf; ax1 = axes(fig1); hold on; box on; grid on;
 
-SIG = 0;
-plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
-SIG = 1;
-plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
+
+
+size( parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, 0, ValveRampInit, Tend, tvec))
+isnan(parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, 0, ValveRampInit, Tend, tvec))
+
+% SIG = 0;
+% plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
+% SIG = 1;
+% plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
 
 
 
@@ -101,32 +106,32 @@ close(vobj);
 % =====================================================================================================================
     
 
-function [PRTg] = parametrify(Ta_pass, Tb_pass, Tc_pass, Td_pass, Tomega, SIG, ValveRampInit, Tend, tvec)
+function [PRTg] = parametrify(Ta_pass, Tb_pass, Tc_pass, Td_pass, Tomega_pass, SIG, ValveRampInit, Tend, tvec)
 
     PRTg = []; 
     if length(Ta_pass)>1
         for idx = 1 : length(Ta_pass)
-            PRTg = [PRTg, run_simulation( Ta_pass(idx),Tb_pass,Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+            PRTg = [PRTg, run_simulation( Ta_pass(idx),Tb_pass,Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega_pass, tvec)];
         end
     end
     if length(Tb_pass)>1
         for idx = 1 : length(Tb_pass)
-            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass(idx),Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass(idx),Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega_pass, tvec)];
         end
     end
     if length(Tc_pass)>1
         for idx = 1 : length(Tc_pass)
-            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass(idx),Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass(idx),Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega_pass, tvec)];
         end
     end
     if length(Td_pass)>1
         for idx = 1 : length(Td_pass)
-            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass,Td_pass(idx),SIG,     Tend, ValveRampInit, ValveRampInit+Tomega, tvec)];
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass,Td_pass(idx),SIG,     Tend, ValveRampInit, ValveRampInit+Tomega_pass, tvec)];
         end
     end
-    if length(Tomega)>1
-        for idx = 1 : length(Tomega)
-            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega(idx), tvec)];
+    if length(Tomega_pass)>1
+        for idx = 1 : length(Tomega_pass)
+            PRTg = [PRTg, run_simulation( Ta_pass,Tb_pass,Tc_pass,Td_pass,SIG,     Tend, ValveRampInit, ValveRampInit+Tomega_pass(idx), tvec)];
         end
     end
 
@@ -156,6 +161,7 @@ function [PRTgrv] = run_simulation(...
     refine = 4;
     
     opts  = odeset('RelTol',1e-5,'AbsTol',1e-5,'Refine',refine);
+    opts = odeset(opts,'NonNegative',[1 2]);
     
     % ===== Solvers:  =====
     %   15s, 
@@ -193,7 +199,7 @@ function [PRTgrv] = run_simulation(...
     PRTf = t90f-t10f;
 
 
-    if 1 % Plot on the all all time integrations
+    if 1 % Plot all time integrations
         
         global vobj;
         figure(10);clf;
@@ -201,8 +207,8 @@ function [PRTgrv] = run_simulation(...
         plot(t_ode*1e3, y(:,1),'linewidth',LW);
         hold on;
         plot(t_ode*1e3, y(:,2),'linewidth',LW);                              
-        fprintf(sprintf('Max pgrv: %1.3f. Nan grv %d. Nan f %d. Max pf: %1.3f\n',...
-            max(pgrv), isnan(pgrv(end)),isnan(pf(end)) , max(pf)));
+        fprintf(sprintf('Max pgrv: %1.3f. Max pf: %1.3f. Nan grv %d. Nan f %d.\n',...
+            max(pgrv), max(pf), isnan(pgrv(end)),isnan(pf(end)) ));
         % xlim([95 120]);
         % ylim([-0.125 1.1]);  
         grid on;
@@ -230,12 +236,19 @@ function dydt = solverA(t_ode, y,A,B,C,D,sigMa_full, ValveRampInit, ValveRampEnd
 omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);
 
 dydt = zeros(2,1);
-dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
-dydt(2) = real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
+% dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
+% dydt(2) = real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
+    s1 = max( 2*(1 - y(1)) , 0 );
+    s2 = max( y(1)*(2 - 2*omeg.^2*sigMa_full.^2) - 2*y(2) + 2*omeg.^2*sigMa_full.^2 , 0 );
+    s3 = max( 2*y(2) , 0 );
+
+    dydt(1) =  omeg*sqrt(s1)/A - sqrt(s2)/B;
+    dydt(2) =  sqrt(s2)/C      - sqrt(s3)/D;
 
 
 end
-% -------------------------
+
+% == Initialisation function Omegat(t) ======================
 function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
 
     if     t_ode<=ValveRampInit
@@ -247,3 +260,6 @@ function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
     end      
 
 end
+
+
+% == Non-negativity solver contraints ======================
