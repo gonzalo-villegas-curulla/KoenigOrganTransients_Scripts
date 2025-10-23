@@ -6,15 +6,13 @@ vobj = VideoWriter('output.avi');
 vobj.FrameRate = 1;
 open(vobj);
 
-% global F;
-
 % %%%%%%%%%%%%%%%%   CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
 
-pipelist = [8];
+pipelist = [8, 18];
 
 % Pallet valve openig time 
 
-ValveRampInit = 0.100; % [s] T-Start opening-ramp pallet valve
+ValveRampInit = 0.100;  % [s] T-Start opening-ramp pallet valve
 ValveRampEnd  = 0.101;  % [s] T-Finish opening-ramp (DROPIC robot time)
 
 
@@ -47,7 +45,7 @@ dt   = 1/fs;
 Tend = 0.300;
 tvec = [0:dt:Tend]';
 
-NUMVALS = 10;
+NUMVALS = 20;
 
 tinit = tic;
 results = cell(length(pipelist),1);
@@ -55,47 +53,59 @@ results = cell(length(pipelist),1);
 
     sample_select = pipelist(1);
 
-    Pg_hat = data_proc.Pgrv_mean(sample_select)/data_proc.Ppall_mean(sample_select);
-    Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);    
-    Vg = data_proc.Vgrv(sample_select);
-    Vf = data_proc.Vf(sample_select);
+    % Pg_hat = data_proc.Pgrv_mean(sample_select)/data_proc.Ppall_mean(sample_select);
+    % Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);    
+    % Vg = data_proc.Vgrv(sample_select);
+    % Vf = data_proc.Vf(sample_select);
+    % 
+    % Spall_geo = data_proc.Spall_geom(sample_select);
+    % Sin_geo   = data_proc.Sin_geom(sample_select);
+    % Sj_geo    = data_proc.Sjet_geom(sample_select);
+    % 
+    % Ta_geo = Vg/(Spall_geo*co2)*sqrt(P0/rho);
+    % Tb_geo = Vg/(Sin_geo*co2)*sqrt(P0/rho);
+    % Tc_geo = Vf/(Sin_geo*co2)*sqrt(P0/rho);
+    % Td_geo = Vf/(Sj_geo*co2)*sqrt(P0/rho);
+    % Tomega = 1e-3;  
 
-    Spall_geo = data_proc.Spall_geom(sample_select);
-    Sin_geo   = data_proc.Sin_geom(sample_select);
-    Sj_geo    = data_proc.Sjet_geom(sample_select);
+    Ta_ref = data_proc.Amax(sample_select);
+    Tb_ref = data_proc.B(sample_select);
+    Tc_ref = data_proc.C(sample_select);
+    Td_ref = data_proc.D(sample_select);
+    Tomega_ref = 1e-3;
 
+    Ta_log     = 1e-3*logspace(-0.15,1.31,NUMVALS);
+    Tb_log     = 1e-3*logspace(0.31, 1.7, NUMVALS);
+    Tc_lin     = 1e-3*linspace(1.0,2.0, NUMVALS);
+    Td_lin     = 1e-3*linspace(1.0, 2.0, NUMVALS);
+    Tomega_log = 1e-3*logspace(-1.3, 1.31, 10);
 
-    Ta_geo = Vg/(Spall_geo*co2)*sqrt(P0/rho);
-    Tb_geo = Vg/(Sin_geo*co2)*sqrt(P0/rho);
-    Tc_geo = Vf/(Sin_geo*co2)*sqrt(P0/rho);
-    Td_geo = Vf/(Sj_geo*co2)*sqrt(P0/rho);
-    Tomega = 1e-3;  
-
-    Ta_log     = logspace(-1.3,1.3,NUMVALS);
-    Tb_log     = logspace(0, 1.2, NUMVALS);
-    Tc_lin     = linspace(1.7,2.4, NUMVALS);
-    Td_lin     = linspace(0.8, 2, NUMVALS);
-    Tomega_log = logspace(-1.3, 1.3, 10);
-
-    Ta_log = logspace(-2,1.7, NUMVALS );
-   
-% parametrify(Ta_geo, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec)
             
 
     % ===================================
     %           Plot results
     % ===================================
+
+% FUNCTION: [PRTg] = parametrify(Ta, Tb, Tc, Td, Tomega, SIGMA, ValveRampInit, Tend, tvec)    
+
+% size( parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 0, ValveRampInit, Tend, tvec))
+% isnan(parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 0, ValveRampInit, Tend, tvec))
+% 
+% size( parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 1, ValveRampInit, Tend, tvec))
+% isnan(parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 1, ValveRampInit, Tend, tvec))
+
 fig1 = figure(1); clf; ax1 = axes(fig1); hold on; box on; grid on;
-
-
-
-size( parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, 0, ValveRampInit, Tend, tvec))
-isnan(parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, 0, ValveRampInit, Tend, tvec))
-
-% SIG = 0;
-% plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
-% SIG = 1;
-% plot(ax1, 1e3*Ta_log, 1e3*parametrify(Ta_log, Tb_geo, Tc_geo,Td_geo, Tomega, SIG, ValveRampInit, Tend, tvec), '-o');
+%
+SIG = 0;
+result = 1e3*parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, SIG, ValveRampInit, Tend, tvec);
+plot(ax1, 1e3*Ta_log(find(result)), result, '-o');
+%
+SIG = 0.5;
+result = 1e3*parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, SIG, ValveRampInit, Tend, tvec);
+plot(ax1, 1e3*Ta_log(find(result)), result, '-o');
+xlabel('$\mathcal{T}_a$ [ms]','interpreter','latex');
+ylabel('$PRT_g$ [ms]', 'interpreter','latex');
+legend('$\Sigma = 0$','$\Sigma = XXX $','interpreter','latex');
 
 
 
@@ -189,17 +199,17 @@ function [PRTgrv] = run_simulation(...
     % Resample homogeneously
     pgrv = interp1(t_ode, pgrv, tvec);
     pf   = interp1(t_ode, pf, tvec);  
-    
+    %
     t10grv = tvec(find(pgrv/pgrv(end)<0.1,1,'last'));
     t90grv = tvec(find(pgrv/pgrv(end)>0.9,1,'first'));
     PRTgrv = t90grv-t10grv;
-    
+    %
     t10f = tvec(find(pf/pf(end)<0.1,1,'last'));
     t90f = tvec(find(pf/pf(end)>0.9,1,'first'));
     PRTf = t90f-t10f;
 
 
-    if 1 % Plot all time integrations
+    if 0 % Plot all time integrations
         
         global vobj;
         figure(10);clf;
@@ -233,18 +243,10 @@ end
 
 function dydt = solverA(t_ode, y,A,B,C,D,sigMa_full, ValveRampInit, ValveRampEnd)
 
-omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);
-
-dydt = zeros(2,1);
-% dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
-% dydt(2) = real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
-    s1 = max( 2*(1 - y(1)) , 0 );
-    s2 = max( y(1)*(2 - 2*omeg.^2*sigMa_full.^2) - 2*y(2) + 2*omeg.^2*sigMa_full.^2 , 0 );
-    s3 = max( 2*y(2) , 0 );
-
-    dydt(1) =  omeg*sqrt(s1)/A - sqrt(s2)/B;
-    dydt(2) =  sqrt(s2)/C      - sqrt(s3)/D;
-
+    omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);    
+    dydt = zeros(2,1);
+    dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A   -   real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
+    dydt(2) =      real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C  -  real(sqrt(2*y(2)))/D;
 
 end
 
@@ -260,6 +262,3 @@ function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
     end      
 
 end
-
-
-% == Non-negativity solver contraints ======================

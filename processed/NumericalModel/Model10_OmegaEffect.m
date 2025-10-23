@@ -66,6 +66,7 @@ for IDX = 1:length(ValveRampEnd_vec)
         res_PRTgrv(IDX)   = PRTgrv;
         res_PRTf(IDX)     = PRTf;
 
+
     
 end
 
@@ -89,6 +90,7 @@ ax=gca;
 ax.XLim(1) = 0; 
 xlim([0 50]);
 ylim([0 25]);
+title(sprintf('SIGMA= %1.2f',SIG));
 
 
 
