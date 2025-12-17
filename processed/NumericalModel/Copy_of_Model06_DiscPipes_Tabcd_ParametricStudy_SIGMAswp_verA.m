@@ -1,14 +1,9 @@
 clc, clear;
 load data_proc.mat
 
-global vobj
-vobj = VideoWriter('output.avi');
-vobj.FrameRate = 1;
-open(vobj);
-
 % %%%%%%%%%%%%%%%%   CUSTOM USER PARAMETERS  %%%%%%%%%%%%%%%%%%%
 
-pipelist = [8, 18];
+pipelist = [8, 18]; % Sampled pipes [1:22]= ["A01",..., "A56"]inventory
 
 % Pallet valve openig time 
 
@@ -45,42 +40,34 @@ dt   = 1/fs;
 Tend = 0.300;
 tvec = [0:dt:Tend]';
 
-NUMVALS = 20;
-
-tinit = tic;
-results = cell(length(pipelist),1);
+NUMVALS = 10;
 
 
-    sample_select = pipelist(1);
+    sample_select = pipelist(:);
 
-    % Pg_hat = data_proc.Pgrv_mean(sample_select)/data_proc.Ppall_mean(sample_select);
-    % Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);    
-    % Vg = data_proc.Vgrv(sample_select);
-    % Vf = data_proc.Vf(sample_select);
-    % 
-    % Spall_geo = data_proc.Spall_geom(sample_select);
-    % Sin_geo   = data_proc.Sin_geom(sample_select);
-    % Sj_geo    = data_proc.Sjet_geom(sample_select);
-    % 
-    % Ta_geo = Vg/(Spall_geo*co2)*sqrt(P0/rho);
-    % Tb_geo = Vg/(Sin_geo*co2)*sqrt(P0/rho);
-    % Tc_geo = Vf/(Sin_geo*co2)*sqrt(P0/rho);
-    % Td_geo = Vf/(Sj_geo*co2)*sqrt(P0/rho);
-    % Tomega = 1e-3;  
+    % PIPE 1 refs
 
-    Ta_ref = data_proc.Amax(sample_select);
-    Tb_ref = data_proc.B(sample_select);
-    Tc_ref = data_proc.C(sample_select);
-    Td_ref = data_proc.D(sample_select);
+    Ta_ref1 = data_proc.Amax(sample_select(1));
+    Tb_ref1 = data_proc.B(sample_select(1));
+    Tc_ref1 = data_proc.C(sample_select(1));
+    Td_ref1 = data_proc.D(sample_select(1));
     Tomega_ref = 1e-3;
 
+    % Pipe 2 refs
+    Ta_ref2 = data_proc.Amax(sample_select(2));
+    Tb_ref2 = data_proc.B(sample_select(2));
+    Tc_ref2 = data_proc.C(sample_select(2));
+    Td_ref2 = data_proc.D(sample_select(2));
+
+    % Parametric slow variation range
     Ta_log     = 1e-3*logspace(-0.15,1.31,NUMVALS);
     Tb_log     = 1e-3*logspace(0.31, 1.7, NUMVALS);
     Tc_lin     = 1e-3*linspace(1.0,2.0, NUMVALS);
     Td_lin     = 1e-3*linspace(1.0, 2.0, NUMVALS);
     Tomega_log = 1e-3*logspace(-1.3, 1.31, 10);
 
-            
+   
+
 
     % ===================================
     %           Plot results
@@ -88,33 +75,53 @@ results = cell(length(pipelist),1);
 
 % FUNCTION: [PRTg] = parametrify(Ta, Tb, Tc, Td, Tomega, SIGMA, ValveRampInit, Tend, tvec)    
 
-% size( parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 0, ValveRampInit, Tend, tvec))
-% isnan(parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 0, ValveRampInit, Tend, tvec))
-% 
-% size( parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 1, ValveRampInit, Tend, tvec))
-% isnan(parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, 1, ValveRampInit, Tend, tvec))
+
+% ============= Tb ===============
+
+
+
 
 fig1 = figure(1); clf; ax1 = axes(fig1); hold on; box on; grid on;
+Tb_min     = min(data_proc.B);
+Tb_sample8 = data_proc.B(8);
+
+for SIG = [0.0 : 0.2 : 1.0]
+
+    % PIPE 1 (def. 8)
+    PRTg1a = parametrifyMULT_func(Ta_ref1, Tb_log, Tc_ref1,Td_ref1, Tomega_ref, SIG, ValveRampInit, Tend, tvec);
+    
+    try
+    plot(ax1, 1e3*Tb_log, 1e3*PRTg1a, 'ok');
+    end
+    xlabel('T_b ms'); ylabel('PRTg ');
+    title('PIPE1 & PIPE2: PRTg via parametrifyMULT()');
+    drawnow();
+
+    
+    % PIPE 2 (def. 18)
+    
+    [PRTg2a,~] = parametrifyMULT_func(Ta_ref2, Tb_log, Tc_ref2,Td_ref2, Tomega_ref, SIG, ValveRampInit, Tend, tvec);
+    PRTg2b     = parametrify(    Ta_ref2, Tb_log, Tc_ref2,Td_ref2, Tomega_ref, SIG, ValveRampInit, Tend, tvec); % HARD CODED BELOW    
+
+    figure();    
+    plot(abs(PRTg2a-PRTg2b)./PRTg2a, '-o');grid on;
+    title('PIPE2: diff between PRTg via parametrifyMULT() and parametrify()');    
+    drawnow();
+
+    try
+    plot(ax1, 1e3*Tb_log, 1e3*PRTg2a, 'dr');
+    plot(ax1, 1e3*Tb_log, 1e3*PRTg2b, 'dg');
+    end    
+    drawnow();
+
+end
 %
-SIG = 0;
-result = 1e3*parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, SIG, ValveRampInit, Tend, tvec);
-plot(ax1, 1e3*Ta_log(find(result)), result, '-o');
-%
-SIG = 0.5;
-result = 1e3*parametrify(Ta_log, Tb_ref, Tc_ref,Td_ref, Tomega_ref, SIG, ValveRampInit, Tend, tvec);
-plot(ax1, 1e3*Ta_log(find(result)), result, '-o');
-xlabel('$\mathcal{T}_a$ [ms]','interpreter','latex');
-ylabel('$PRT_g$ [ms]', 'interpreter','latex');
-legend('$\Sigma = 0$','$\Sigma = XXX $','interpreter','latex');
-
-
-
-close(vobj);
 
 % =====================================================================================================================
 % =====================================================================================================================
 % =====================================================================================================================
     
+
 
 function [PRTg] = parametrify(Ta_pass, Tb_pass, Tc_pass, Td_pass, Tomega_pass, SIG, ValveRampInit, Tend, tvec)
 
@@ -145,10 +152,9 @@ function [PRTg] = parametrify(Ta_pass, Tb_pass, Tc_pass, Td_pass, Tomega_pass, S
         end
     end
 
-    
-
-
 end
+
+% ===================================================
     
 function [PRTgrv] = run_simulation(...
        PASS_Amax, ...
@@ -203,6 +209,9 @@ function [PRTgrv] = run_simulation(...
     t10grv = tvec(find(pgrv/pgrv(end)<0.1,1,'last'));
     t90grv = tvec(find(pgrv/pgrv(end)>0.9,1,'first'));
     PRTgrv = t90grv-t10grv;
+    if pgrv(end)<pf(end)
+        PRTgrv=NaN;
+    end
     %
     t10f = tvec(find(pf/pf(end)<0.1,1,'last'));
     t90f = tvec(find(pf/pf(end)>0.9,1,'first'));
@@ -210,8 +219,7 @@ function [PRTgrv] = run_simulation(...
 
 
     if 0 % Plot all time integrations
-        
-        global vobj;
+                
         figure(10);clf;
         LW = 1.5;
         plot(t_ode*1e3, y(:,1),'linewidth',LW);
@@ -242,23 +250,10 @@ end
 % == ODE to solve ======================
 
 function dydt = solverA(t_ode, y,A,B,C,D,sigMa_full, ValveRampInit, ValveRampEnd)
-
+    fprintf('inline func\n');
     omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);    
     dydt = zeros(2,1);
     dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A   -   real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
     dydt(2) =      real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C  -  real(sqrt(2*y(2)))/D;
-
-end
-
-% == Initialisation function Omegat(t) ======================
-function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
-
-    if     t_ode<=ValveRampInit
-        OM = 0.0;
-    elseif ValveRampEnd<t_ode
-        OM = 1.0;        
-    else
-        OM = 0.5 - 0.5*cos(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit));
-    end      
 
 end

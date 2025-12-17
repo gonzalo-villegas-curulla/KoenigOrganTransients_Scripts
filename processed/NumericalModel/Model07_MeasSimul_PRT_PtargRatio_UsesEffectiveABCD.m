@@ -78,7 +78,7 @@ fprintf('Simulation took %1.3f\n',toc(tinit));
     % ===================================
 
 figure(10); clf;
-subplot(2,2,1); % PRTf simul vs meas
+subplot(2,2,2); % PRTf simul vs meas
 errorbar(...
     1e3*MX_results(:,5),...
     1e3*data_proc.PRTf_mean,...
@@ -88,7 +88,7 @@ grid on; xlabel('Simul [ms]'); ylabel('Meas [ms]'); title('PRT_f');
 ylim([0 8]);
 
 
-subplot(2,2,2); % PRTgrv
+subplot(2,2,1); % PRTgrv
 errorbar(...
     1e3*MX_results(:,4),...
     1e3*data_proc.PRTgrv_mean,...
@@ -137,7 +137,7 @@ fax = 12*log2(data_proc.F1/440);
 figure(11); clf;
 
 % [A]
-subplot(2,2,1); % PRTf simul vs meas
+subplot(2,2,2); % PRTf simul vs meas
 errorbar(fax, ...
     1e3*data_proc.PRTf_mean,...
     1e3*data_proc.PRTf_std,...
@@ -154,7 +154,7 @@ ylabel('[ms]');
 legend('Meas','Simul');
 
 % [B]
-subplot(2,2,2); % PRTgrv
+subplot(2,2,1); % PRTgrv
 errorbar(...
     fax,...
     1e3*data_proc.PRTgrv_mean,...
@@ -314,9 +314,6 @@ function dydt = solverA(t_ode, y, A,B,C,D,sigMa_full, ValveRampInit, ValveRampEn
 omeg = omega_func(t_ode, ValveRampInit, ValveRampEnd);
 
 dydt = zeros(2,1);
-% dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-omeg.^2*sigMa_full.^2) -2*y(2) + omeg.^2*sigMa_full^2 ))/B;
-% dydt(2) = real(sqrt(y(1)*(2-omeg.^2*sigMa_full.^2) -2*y(2)+omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
-
 dydt(1) = omeg*real(sqrt(2*(1-y(1))))/A - real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2) + 2*omeg.^2*sigMa_full^2 ))/B;
 dydt(2) = real(sqrt(y(1)*(2-2*omeg.^2*sigMa_full.^2) -2*y(2)+2*omeg.^2*sigMa_full.^2 ))/C - real(sqrt(2*y(2)))/D;
 
@@ -330,7 +327,7 @@ function OM = omega_func(t_ode, ValveRampInit, ValveRampEnd)
     elseif ValveRampEnd<t_ode
         OM = 1.0;        
     else
-        OM = 0.5 + 0.5*sin(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit) -pi/2);
+        OM = 0.5 - 0.5*cos(pi*(t_ode-ValveRampInit)/(ValveRampEnd-ValveRampInit));
     end      
 
 end

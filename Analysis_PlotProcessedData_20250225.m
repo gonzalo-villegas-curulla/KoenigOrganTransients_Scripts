@@ -61,7 +61,7 @@ fax = 12*log2(F1MEAN/440);
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % All geometry vars w.r.t. f1/440
 FSZ = 17;
-figure(); hold on;
+figure(1); hold on;
 
 for idx = 1 :12
     tmp_data = log10( median(MX(:,:,idx)) );
@@ -71,8 +71,10 @@ end
 grid on; box on;
 legend(namevarsall);
 
-if 0%figure(); 
-% for idx=1:12
+if 1
+figure(2); 
+for idx=1:12
+    clf;
     ff = polyfit( 12*log2(F1MEAN/440), log10(median(MX(:,:,idx),1,'omitnan')), 1);
     plot(12*log2(F1MEAN/440), log10(median(MX(:,:,idx),1,'omitnan')) ,'-kd');
     hold on;
@@ -80,8 +82,12 @@ if 0%figure();
     grid on; box on;
     hold off;
     title(sprintf('Variable: %s. Slope %2.5f, offset %2.5f ',namevarsall{idx}, ff(1),ff(2)));
-    drawnow;
+
+    MXmedian = median(MX(:,:,idx),1,'omitnan');
+    pf = polyfit( 12*log2(F1MEAN/440) , log10(MXmedian/max(median(MX(:,:,idx),1,'omitnan'))) , 1);
+    drawnow();
     pause();
+end 
 end
 
 %% S_palletvalve, S_slot, S_tonehole, S_in, S_j 

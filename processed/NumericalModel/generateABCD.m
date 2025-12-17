@@ -2,7 +2,7 @@ function [Ta, Tb, Tc, Td] = generateABCD(sigma, Pf_targ, Pg_targ, PRTg, Vg, Vf)
 
     % From itemized recipe: 
     % * chose one value of $\Sigma$
-    % * estimate A from PRT
+    % * estimate A from PRTg
     % * deduced B,C,D from steady states
     % * simulate with very short $\tau_{\Omega}$ 
 
@@ -18,7 +18,7 @@ Vf      = Vf(:);
 % (1) -> Impose chosen sigma
 
 % (2) 
-Ta = PRTg/1.3;
+Ta = PRTg/1.45; % 1.3, 1.4438, 1.45
 
 % (3) Derive rest of characteristic times
     ABchunk = (1-Pg_targ)./(Pg_targ*(1-sigma^2) - Pf_targ + sigma^2);

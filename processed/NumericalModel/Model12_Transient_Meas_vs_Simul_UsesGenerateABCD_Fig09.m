@@ -1,6 +1,7 @@
-clc, clear;
+clc;
+clearvars -except MX1 sample_select TRANSNUM IIDX JDX
 load data_proc.mat;
-sample_select = 8; % A#_0
+% % % % % % sample_select = 8; % A#_0 % <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 CHARtime_omega = 1e-3;
 
 % Pallet valve openig time 
@@ -21,6 +22,7 @@ Tend = 3.300;
 % tmeas = [0:dt:Tend]';
 
 SIGvec = [0.0, 1.0]';
+SIGvec = [1.0]';% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%<<<<<<<<<<<<<<<<<<<<<
 
 
 % ========== Figure handles =============
@@ -44,7 +46,15 @@ Pf_hat = data_proc.Pf_mean(sample_select)/data_proc.Ppall_mean(sample_select);
 % =================
 fprintf('Starting to process measured data\n');
 
-PIPENUM = sample_select; TRANSNUM  = 10; 
+
+
+PIPENUM = sample_select; 
+% % % % % % TRANSNUM  = 10; %Def: 10  %%%% <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+
+
 files   = dir('../../A*.mat');
 load(fullfile('../../',files(PIPENUM).name), 'PR_data', 'tvec');
 
@@ -88,9 +98,6 @@ pf_meas   = pf_meas(:)  ./pres_meas(:);
 pgrv_meas_targ = mean(pgrv_meas(fix(0.33*length(pgrv_meas)):fix(0.66*length(pgrv_meas))));
 tmeas_p = tmeas - dt*find(pgrv_meas(1:fix(0.5*length(pgrv_meas)))/pgrv_meas_targ<0.1,1, 'last');
 
-plot(axh1, tmeas_p*1e3, pgrv_meas);
-plot(axh2, tmeas_p*1e3, pf_meas);
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -99,6 +106,9 @@ plot(axh2, tmeas_p*1e3, pf_meas);
 %               %    Simulated data      %
 %               %%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+plot(axh1, tmeas_p*1e3, pgrv_meas, 'k');
+plot(axh2, tmeas_p*1e3, pf_meas, 'k');
 
 
 for IDX = 1 : length(SIGvec) 
@@ -128,64 +138,79 @@ for IDX = 1 : length(SIGvec)
                                     ValveRampInit, ValveRampEnd),...
                                     [tstart tfinal], y(2,:), opts); 
 
-% ====  Analysis  ===============================
-pgrv_simu = y(:,1);
-pf_simu   = y(:,2);
+    % ====  Analysis  ===============================
+    pgrv_simu = y(:,1);
+    pf_simu   = y(:,2);
+    
+    
+    % Homogeneously sample data 
+    pgrv_simu = interp1(tsimu, pgrv_simu, tmeas);
+    pf_simu   = interp1(tsimu, pf_simu,  tmeas);    
+    tsimu     = interp1(tsimu, tsimu, tmeas);
+    
+    
+    t10grv_simu = tsimu(find(pgrv_simu/max(pgrv_simu) < 0.1,1,'last'));
+    tsimu_p     = tsimu - 0*t10grv_simu;
+    
+    
+        % ===================================
+        %           Plot simul
+    everyN = 100; % Marker density
+    
+    
+    
+    plot(axh1, tsimu_p*1e3, pgrv_simu, ...
+        '--', 'Marker','o','MarkerIndices',1:everyN:length(pgrv_simu));
+    
+    plot(axh2, tsimu_p *1e3, pf_simu,...
+          '--', 'Marker','o',...
+          'MarkerIndices',1:everyN:length(pf_simu) );
+
+    % ====================
+    % Sigma = 0,1
+
+    
+    finit = zeros(size(tsimu));
+    for idx = 1 : length(finit)
+        finit(idx) = omega_func(tsimu(idx), ValveRampInit, ValveRampEnd);
+    end
+    finit(isnan(finit)) = 0;
+    finit(end) = 1;
 
 
-% Homogeneously sample data 
-pgrv_simu = interp1(tsimu, pgrv_simu, tmeas);
-pf_simu   = interp1(tsimu, pf_simu,  tmeas);
+    t10key_simu = tsimu(find(finit<0.1, 1, 'last')); 
+    t10g_simu   = t10grv_simu; 
+    t10f_simu   = tsimu(find( pf_simu/max(pf_simu)<0.1, 1, 'last' ));
+    % taumech_simu = t10g_simu - t10key_simu;
+    tauflow_simu = t10f_simu - t10g_simu;
+    
 
-tsimu = interp1(tsimu, tsimu, tmeas);
-
-
-t10grv_simu = tsimu(find(pgrv_simu/max(pgrv_simu) < 0.1,1,'last'));
-tsimu_p     = tsimu - t10grv_simu;
-
-
-    % ===================================
-    %           Plot simul
-    % ===================================
-everyN = 100;
-
-plot(axh1,...
-    tsimu_p*1e3, ...
-    pgrv_simu, ...
-    '--', 'Marker','o','MarkerIndices',1:everyN:length(pgrv_simu));
-
-plot(axh2,...
-    tsimu_p *1e3, ...
-      pf_simu,...
-      '--', 'Marker','o',...
-      'MarkerIndices',1:everyN:length(pf_simu) );
 
 end
 
 XLIM = [-5 10];
+XLIM = [-5 30];
 xlim(axh1, XLIM);
 xlim(axh2, XLIM);
 
 
-ylim(axh1, [-0.1    1.0]);
-% ylim(axh2, [-0.025, 0.4]);
-ylim(axh2, [-0.1, 1.0]);
+ylim(axh1, [-0.05  1.0]);
+ylim(axh2, [-0.05, 0.4]);
 
 
 xlabel(axh1, 'Time [ms]', 'interpreter','latex');
-ylabel(axh1, 'Pressure [n.u.]', 'interpreter','latex');
-legend(axh1, {'$\overline{P}_{g}$ measured','$\overline{P}_{g}$  simul. ($\Sigma = 0.0)$','$\overline{P}_g$ simul. ($\Sigma = 1.0$)'}, ...
+ylabel(axh1, '$\overline{P}_g \ [n.u.]$', 'interpreter','latex');
+legend(axh1, {'Measured','Sim. $\Sigma = 0$','Sim. $\Sigma = 1$'}, ...
     'location','southeast','interpreter','latex');
 
 
 
 
 xlabel(axh2, 'Time [ms]', 'interpreter','latex');
-ylabel(axh2, 'Pressure [n.u]', 'interpreter','latex');
-legend(axh2, {'$\overline{P}_{f}$ measured','$\overline{P}_{f}$  simul. ($\Sigma = 0.0)$','$\overline{P}_f$ simul. ($\Sigma = 1.0$)'},...
+ylabel(axh2, '$\overline{P}_f \ [n.u]$', 'interpreter','latex');
+legend(axh2, {'Measured','Sim. $\Sigma = 0$','Sim. $\Sigma = 1$'},...
     'location','southeast','interpreter','latex');
-
-
+drawnow();
 
 % =====================================================================================================================
 % =====================================================================================================================
